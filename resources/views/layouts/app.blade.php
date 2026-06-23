@@ -179,7 +179,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
 
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 shadow-sm shrink-0">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-30 shadow-sm shrink-0">
 
             <div class="flex items-center flex-1">
                 <button @click="isCollapsed = !isCollapsed" class="mr-4 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors p-1 rounded-md hover:bg-gray-100">
