@@ -164,14 +164,16 @@
 
         </nav>
 
-        <div class="mt-auto border-t border-slate-800 flex flex-col">
-            <form method="POST" action="{{ route('logout') }}" class="p-4">
-                @csrf
-                <button title="Keluar" type="submit" class="flex items-center w-full px-2 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors group">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span x-show="!isCollapsed" class="ml-4 whitespace-nowrap">Keluar</span>
-                </button>
-            </form>
+        <div class="mt-auto border-t border-slate-800 p-4">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {{ substr(auth()->user()->name, 0, 1) }}
+                </div>
+                <div x-show="!isCollapsed" class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-200 truncate">{{ auth()->user()->name }}</p>
+                    <p class="text-xs text-slate-500 capitalize truncate">{{ auth()->user()->role }}</p>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -189,25 +191,62 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-4" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
 
-
-                <!-- <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="relative p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-300 focus:outline-none group">
-                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                        @if($notifCount > 0)
-                            <span class="absolute top-1.5 right-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-rose-500 rounded-full ring-2 ring-white animate-pulse">{{ $notifCount }}</span>
-                        @endif
+                {{-- Dropdown Akun --}}
+                <div class="relative">
+                    <button @click="userMenuOpen = !userMenuOpen"
+                        class="flex items-center gap-2.5 pl-4 border-l border-gray-200 focus:outline-none group"
+                        title="Menu Akun">
+                        <div class="bg-indigo-100 text-indigo-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 group-hover:bg-indigo-200 transition-colors">
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        </div>
+                        <div class="text-sm hidden sm:block">
+                            <p class="font-bold text-gray-700 leading-none">{{ auth()->user()->name }}</p>
+                            <p class="text-gray-500 text-xs mt-0.5 capitalize">{{ auth()->user()->role }}</p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 hidden sm:block transition-transform duration-200" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
                     </button>
-                </div> -->
 
-                <div class="flex items-center border-l pl-6 border-gray-200">
-                    <div class="bg-indigo-100 text-indigo-600 w-9 h-9 rounded-full flex items-center justify-center font-bold mr-3">
-                        {{ substr(auth()->user()->name, 0, 1) }}
-                    </div>
-                    <div class="text-sm">
-                        <p class="font-bold text-gray-700 leading-none">{{ auth()->user()->name }}</p>
-                        <p class="text-gray-500 text-xs mt-1 capitalize">{{ auth()->user()->role }}</p>
+                    {{-- Dropdown Panel --}}
+                    <div x-show="userMenuOpen"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 translate-y-1"
+                         class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                         style="display: none;">
+
+                        {{-- Info user (mobile only) --}}
+                        <div class="px-4 py-3 border-b border-gray-100 sm:hidden">
+                            <p class="font-semibold text-gray-800 text-sm truncate">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-500 capitalize">{{ auth()->user()->role }}</p>
+                        </div>
+
+                        <a href="{{ route('profile.edit') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            Profil Saya
+                        </a>
+
+                        <div class="border-t border-gray-100 mt-1 pt-1">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Keluar
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
