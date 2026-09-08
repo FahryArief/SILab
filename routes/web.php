@@ -55,7 +55,7 @@ Route::middleware(['auth', 'role:super_admin'])->group(function () {
 });
 
 // GRUP ROUTE TEKNISI (juga bisa diakses oleh super_admin)
-Route::middleware(['auth', 'role:teknisi,super_admin'])->group(function () {
+Route::middleware(['auth', 'role:teknisi,super_admin,kepala_lab'])->group(function () {
 Route::get('/operator/barang/{id}/barcode', function($id) {
     $barang = \App\Models\Barang::with(['kategori', 'ruangan'])->findOrFail($id);
     return view('operator.barang.barcode', compact('barang'));
