@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use App\Models\BookingRuangan;
+use App\Models\Peminjaman;
+use App\Support\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,14 +27,17 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\View::composer('layouts.app', function ($view) {
             if (auth()->check()) {
-                $notifCount = 0;
                 $userRole = auth()->user()->role;
-                if ($userRole === 'teknisi' || $userRole === 'super_admin') {
-                    $notifCount = \App\Models\Peminjaman::where('status', 'pending')->count()
-                                + \App\Models\BookingRuangan::where('status', 'pending')->count();
-                } elseif ($userRole === 'kepala_lab') {
-                    $notifCount = \App\Models\Peminjaman::where('status', 'divalidasi_teknisi')->count();
+                static $counts = [];
+                if (! array_key_exists($userRole, $counts)) {
+                    $counts[$userRole] = match ($userRole) {
+                        Role::TEKNISI, Role::SUPER_ADMIN => Peminjaman::where('status', 'pending')->count()
+                            + BookingRuangan::where('status', 'pending')->count(),
+                        Role::KEPALA_LAB => Peminjaman::where('status', 'divalidasi_teknisi')->count(),
+                        default => 0,
+                    };
                 }
+                $notifCount = $counts[$userRole];
                 $view->with('notifCount', $notifCount);
             }
         });

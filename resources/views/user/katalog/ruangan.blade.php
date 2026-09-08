@@ -73,6 +73,10 @@
         @endforelse
     </div>
 
+    <div class="max-w-7xl mx-auto mt-6">
+        {{ $ruangans->links() }}
+    </div>
+
     <div id="bookingModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4">
             <div class="fixed inset-0 bg-black opacity-50" onclick="closeBookingModal()"></div>

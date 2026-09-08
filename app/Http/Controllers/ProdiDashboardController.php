@@ -9,7 +9,6 @@ use App\Models\Barang;
 use App\Models\Ruangan;
 use App\Models\TahunAjaran;
 use App\Models\JadwalKuliah;
-use Carbon\Carbon;
 
 class ProdiDashboardController extends Controller
 {
@@ -30,21 +29,21 @@ class ProdiDashboardController extends Controller
         }
 
         // 2. DATA GRAFIK: Tren Peminjaman (12 Bulan di Tahun Ini)
-        $peminjamanTahunIni = Peminjaman::whereYear('tanggal_pinjam', $tahunIni)->get();
+        $peminjamanTahunIni = Peminjaman::selectRaw('MONTH(tanggal_pinjam) as bulan, COUNT(*) as total')
+            ->whereYear('tanggal_pinjam', $tahunIni)
+            ->groupBy('bulan')
+            ->pluck('total', 'bulan');
         $dataTren = [];
         for ($i = 1; $i <= 12; $i++) {
-            $dataTren[] = $peminjamanTahunIni->filter(function ($item) use ($i) {
-                return Carbon::parse($item->tanggal_pinjam)->month == $i;
-            })->count();
+            $dataTren[] = $peminjamanTahunIni->get($i, 0);
         }
 
         // 3. DATA GRAFIK: Top 5 Ruangan Sering Digunakan
-        $bookings = BookingRuangan::with('ruangan')->get();
-        $ruangDist = $bookings->groupBy(function($item) {
-            return $item->ruangan->nama_ruangan ?? 'Ruang Dihapus';
-        })->map->count()->sortDesc()->take(5);
-        $labelRuang = $ruangDist->keys()->toArray();
-        $dataRuang = $ruangDist->values()->toArray();
+        $topRuangan = BookingRuangan::select('ruangan_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as total'))
+            ->groupBy('ruangan_id')->orderByDesc('total')->limit(5)
+            ->with('ruangan:id,nama_ruangan')->get();
+        $labelRuang = $topRuangan->map(fn ($item) => $item->ruangan->nama_ruangan ?? 'Ruang Dihapus')->toArray();
+        $dataRuang = $topRuangan->pluck('total')->toArray();
 
         return view('prodi.dashboard', compact(
             'totalBarang', 'totalRuangan', 'peminjamanPending', 'bookingPending', 'jadwalAktifCount', 'tahunAjaranAktif',

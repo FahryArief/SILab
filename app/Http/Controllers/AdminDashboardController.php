@@ -21,8 +21,11 @@ class AdminDashboardController extends Controller
         $total_booking = BookingRuangan::count();
 
         // Ambil Data Terbaru
-        $recent_users = User::latest()->take(5)->get();
-        $recent_peminjamans = Peminjaman::with(['user', 'barangs'])->latest()->take(5)->get();
+        $recent_users = User::select(['id', 'name', 'email', 'role', 'created_at'])
+            ->latest()->take(5)->get();
+        $recent_peminjamans = Peminjaman::with([
+            'user:id,name', 'barangs:id,nama_barang,barcode',
+        ])->latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
             'total_users', 

@@ -19,9 +19,8 @@ class AuditPeriodeController extends Controller
      */
     public function index()
     {
-        $periodes = AuditPeriode::with('kepalaLab')
-            ->latest()
-            ->get();
+        $periodes = AuditPeriode::with('kepalaLab:id,name')
+            ->latest()->paginate(15)->withQueryString();
 
         return view('admin.audit.periode.index', compact('periodes'));
     }

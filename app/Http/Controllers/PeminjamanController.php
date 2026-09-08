@@ -26,10 +26,12 @@ class PeminjamanController extends Controller
         $peminjamans = Peminjaman::with(['user:id,name,email', 'barangs:id,nama_barang,barcode'])->latest()->paginate(20);
 
         // Ambil data barang yang tersedia untuk form pilihan
-        $barangs = Barang::where('status_peminjaman', 'Tersedia')->get();
+        $barangs = Barang::select(['id', 'nama_barang', 'barcode', 'kondisi'])
+            ->where('status_peminjaman', 'Tersedia')->get();
 
         // Ambil data mahasiswa
-        $users = User::where('role', 'peminjam')->get();
+        $users = User::select(['id', 'name', 'email'])
+            ->where('role', 'peminjam')->get();
 
         return view('operator.peminjaman.index', compact('peminjamans', 'barangs', 'users'));
     }

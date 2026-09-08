@@ -8,20 +8,22 @@ use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
+use App\Support\Role;
 
 class UserController extends Controller
 {
     /**
      * Valid roles for the application.
      */
-    public const VALID_ROLES = ['super_admin', 'teknisi', 'kepala_lab', 'ka_prodi', 'peminjam'];
+    public const VALID_ROLES = Role::ALL;
 
     use AuthorizesRequests;
 
     public function index()
     {
         $this->authorize('viewAny', User::class);
-        $users = User::latest()->get();
+        $users = User::select(['id', 'name', 'email', 'role', 'created_at'])
+            ->latest()->paginate(20)->withQueryString();
         return view('admin.users.index', compact('users'));
     }
 

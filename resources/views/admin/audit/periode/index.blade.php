@@ -222,4 +222,7 @@
         </div>
     </div>
     @endif
+    <div class="mt-6">
+        {{ $periodes->links() }}
+    </div>
 </x-app-layout>

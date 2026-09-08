@@ -201,6 +201,9 @@
             </div>
         </div>
     </div>
+    <div class="mt-6">
+        {{ $jadwals->links() }}
+    </div>
 </x-app-layout>
 
 <!-- Modal Edit -->

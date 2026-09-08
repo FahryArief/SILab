@@ -13,13 +13,13 @@ class UserDashboardController extends Controller
         $user_id = auth()->id();
 
         // Ambil data pengajuan milik user ini saja
-        $my_bookings = BookingRuangan::with('ruangan')
+        $my_bookings = BookingRuangan::with('ruangan:id,nama_ruangan')
                         ->where('user_id', $user_id)
                         ->latest()
                         ->take(5)
                         ->get();
 
-        $my_peminjamans = Peminjaman::with('barangs')
+        $my_peminjamans = Peminjaman::with('barangs:id,nama_barang,barcode')
                         ->where('user_id', $user_id)
                         ->latest()
                         ->take(5)
@@ -37,16 +37,16 @@ class UserDashboardController extends Controller
         $user_id = auth()->id();
 
         // Ambil SEMUA data peminjaman barang milik user ini
-        $peminjamans = Peminjaman::with('barangs')
+        $peminjamans = Peminjaman::with('barangs:id,nama_barang,barcode')
                         ->where('user_id', $user_id)
                         ->orderBy('created_at', 'desc')
-                        ->get();
+                        ->paginate(20)->withQueryString();
 
         // Ambil SEMUA data booking ruangan milik user ini
-        $bookings = BookingRuangan::with('ruangan')
+        $bookings = BookingRuangan::with('ruangan:id,nama_ruangan')
                         ->where('user_id', $user_id)
                         ->orderBy('created_at', 'desc')
-                        ->get();
+                        ->paginate(20)->withQueryString();
 
         return view('user.riwayat', compact('peminjamans', 'bookings'));
     }

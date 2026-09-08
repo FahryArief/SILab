@@ -17,7 +17,10 @@ class RuanganController extends Controller
 {
     public function index()
     {
-        $ruangans = Ruangan::all();
+        $ruangans = Ruangan::select([
+            'id', 'nama_ruangan', 'kode_ruangan', 'kapasitas', 'lokasi',
+            'keterangan', 'fasilitas', 'foto_ruangan', 'terakhir_diperiksa_at',
+        ])->latest()->paginate(18)->withQueryString();
         return view('operator.ruangan.index', compact('ruangans'));
     }
 

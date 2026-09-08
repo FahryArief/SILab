@@ -3,16 +3,17 @@
 namespace App\Services;
 
 use App\Models\Peminjaman;
+use App\Support\PeminjamanStatus;
 use DomainException;
 
 class PeminjamanStatusService
 {
     private const TRANSITIONS = [
-        'pending' => ['divalidasi_teknisi', 'ditolak'],
-        'divalidasi_teknisi' => ['disetujui', 'ditolak'],
-        'disetujui' => ['dikembalikan'],
-        'ditolak' => [],
-        'dikembalikan' => [],
+        PeminjamanStatus::PENDING => [PeminjamanStatus::VALIDATED, PeminjamanStatus::REJECTED],
+        PeminjamanStatus::VALIDATED => [PeminjamanStatus::APPROVED, PeminjamanStatus::REJECTED],
+        PeminjamanStatus::APPROVED => [PeminjamanStatus::RETURNED],
+        PeminjamanStatus::REJECTED => [],
+        PeminjamanStatus::RETURNED => [],
     ];
 
     public function transition(Peminjaman $peminjaman, string $status): void

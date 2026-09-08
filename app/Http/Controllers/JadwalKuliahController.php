@@ -21,9 +21,12 @@ class JadwalKuliahController extends Controller
     {
         // Hanya tampilkan tahun ajaran yang aktif secara default, atau ambil semua jika ingin filter
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
-        $ruangans = Ruangan::all();
+        $ruangans = Ruangan::select(['id', 'nama_ruangan'])->orderBy('nama_ruangan')->get();
         
-        $jadwals = JadwalKuliah::with(['ruangan', 'tahunAjaran'])->latest()->get();
+        $jadwals = JadwalKuliah::with([
+            'ruangan:id,nama_ruangan',
+            'tahunAjaran:id,nama_tahun',
+        ])->latest()->paginate(25)->withQueryString();
 
         return view('admin.jadwal_kuliah.index', compact('jadwals', 'ruangans', 'tahunAjaranAktif'));
     }

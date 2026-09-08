@@ -32,7 +32,8 @@ class BookingRuanganController extends Controller
                     ->get();
 
         // 3. Ambil data mahasiswa untuk modal
-        $users = User::where('role', 'peminjam')->get();
+        $users = User::select(['id', 'name', 'email'])
+            ->where('role', 'peminjam')->get();
 
         // 4. LOGIKA KALENDER DINAMIS
         $currentMonth = date('m', strtotime($selectedDate));
