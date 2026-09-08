@@ -16,7 +16,12 @@ use App\Http\Controllers\UserController;
 
 
 Route::get('/', function () {
-    return view('welcome');
+    $settings = \App\Models\Setting::pluck('value', 'key');
+    $prestasi = \App\Models\LandingPrestasi::latest()->take(4)->get();
+    $fasilitas = \App\Models\LandingFasilitas::latest()->take(6)->get();
+    $dokumentasi = \App\Models\LandingDokumentasi::latest()->take(8)->get();
+
+    return view('welcome', compact('settings', 'prestasi', 'fasilitas', 'dokumentasi'));
 });
 
 // PENGATUR LALU LINTAS SETELAH LOGIN
@@ -143,6 +148,18 @@ Route::middleware(['auth', 'role:teknisi,kepala_lab,ka_prodi,super_admin'])->gro
     // Export/Import Jadwal
     Route::get('/admin/jadwal-kuliah-export', [\App\Http\Controllers\JadwalKuliahController::class, 'export'])->name('admin.jadwal_kuliah.export');
     Route::post('/admin/jadwal-kuliah-import', [\App\Http\Controllers\JadwalKuliahController::class, 'import'])->name('admin.jadwal_kuliah.import');
+});
+
+// ROUTE PENGATURAN LANDING PAGE (Diakses oleh semua kecuali peminjam)
+Route::middleware(['auth', 'role:super_admin,teknisi,kepala_lab,ka_prodi'])->group(function () {
+    // Settings (Statistik & Footer)
+    Route::get('/admin/landing/settings', [\App\Http\Controllers\LandingSettingController::class, 'index'])->name('admin.landing.settings.index');
+    Route::post('/admin/landing/settings', [\App\Http\Controllers\LandingSettingController::class, 'update'])->name('admin.landing.settings.update');
+
+    // Prestasi, Fasilitas, Dokumentasi
+    Route::resource('admin/landing/prestasi', \App\Http\Controllers\LandingPrestasiController::class)->names('admin.landing.prestasi');
+    Route::resource('admin/landing/fasilitas', \App\Http\Controllers\LandingFasilitasController::class)->names('admin.landing.fasilitas');
+    Route::resource('admin/landing/dokumentasi', \App\Http\Controllers\LandingDokumentasiController::class)->names('admin.landing.dokumentasi');
 });
 
 // ROUTE AUDIT INVENTARIS — Periode Based

@@ -1005,19 +1005,19 @@
         <div class="section-container">
             <div class="stats-grid">
                 <div class="stat-item" data-animate>
-                    <div class="stat-number" data-count="12">0</div>
+                    <div class="stat-number" data-count="{{ $settings['stats_ruangan'] ?? '12' }}">0</div>
                     <div class="stat-label">Ruang Laboratorium</div>
                 </div>
                 <div class="stat-item" data-animate>
-                    <div class="stat-number" data-count="500">0</div>
+                    <div class="stat-number" data-count="{{ $settings['stats_inventaris'] ?? '500' }}">0</div>
                     <div class="stat-label">Perangkat Inventaris</div>
                 </div>
                 <div class="stat-item" data-animate>
-                    <div class="stat-number" data-count="25">0</div>
+                    <div class="stat-number" data-count="{{ $settings['stats_penghargaan'] ?? '25' }}">0</div>
                     <div class="stat-label">Penghargaan Diraih</div>
                 </div>
                 <div class="stat-item" data-animate>
-                    <div class="stat-number" data-count="1200">0</div>
+                    <div class="stat-number" data-count="{{ $settings['stats_mahasiswa'] ?? '1200' }}">0</div>
                     <div class="stat-label">Mahasiswa Terlayani</div>
                 </div>
             </div>
@@ -1037,44 +1037,23 @@
             </div>
 
             <div class="docs-grid">
-                <!-- Card 1 -->
+                @foreach($dokumentasi as $item)
                 <div class="doc-card" data-animate>
                     <div class="doc-card-img-wrapper">
-                        <span class="doc-card-date">📅 15 Mei 2026</span>
-                        <img src="{{ asset('images/landing/lab_activity_1.png') }}" alt="Workshop Pemrograman" class="doc-card-img" loading="lazy">
+                        <span class="doc-card-date">📅 {{ \Carbon\Carbon::parse($item->tanggal)->format('d M Y') }}</span>
+                        @if($item->gambar)
+                            <img src="{{ asset('images/landing/' . $item->gambar) }}" alt="{{ $item->judul }}" class="doc-card-img" loading="lazy">
+                        @else
+                            <img src="{{ asset('images/landing/placeholder.png') }}" alt="{{ $item->judul }}" class="doc-card-img" loading="lazy">
+                        @endif
                     </div>
                     <div class="doc-card-body">
-                        <span class="doc-card-tag">Workshop</span>
-                        <h3>Workshop Pemrograman Web Modern</h3>
-                        <p>Pelatihan intensif pengembangan web menggunakan teknologi terkini seperti Laravel, React, dan microservices. Diikuti oleh 80+ mahasiswa dari berbagai program studi.</p>
+                        <span class="doc-card-tag">{{ $item->tag }}</span>
+                        <h3>{{ $item->judul }}</h3>
+                        <p>{{ Str::limit($item->deskripsi, 120) }}</p>
                     </div>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="doc-card" data-animate>
-                    <div class="doc-card-img-wrapper">
-                        <span class="doc-card-date">📅 28 April 2026</span>
-                        <img src="{{ asset('images/landing/lab_activity_2.png') }}" alt="Praktikum IoT" class="doc-card-img" loading="lazy">
-                    </div>
-                    <div class="doc-card-body">
-                        <span class="doc-card-tag">Praktikum</span>
-                        <h3>Praktikum Internet of Things (IoT)</h3>
-                        <p>Sesi praktikum hands-on menggunakan sensor, mikrokontroler, dan platform IoT. Mahasiswa belajar membuat smart device dan sistem monitoring otomatis.</p>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="doc-card" data-animate>
-                    <div class="doc-card-img-wrapper">
-                        <span class="doc-card-date">📅 10 Maret 2026</span>
-                        <img src="{{ asset('images/landing/lab_activity_3.png') }}" alt="Seminar AI" class="doc-card-img" loading="lazy">
-                    </div>
-                    <div class="doc-card-body">
-                        <span class="doc-card-tag">Seminar</span>
-                        <h3>Seminar Kecerdasan Buatan & Machine Learning</h3>
-                        <p>Seminar bersama pakar industri tentang implementasi AI dalam dunia kerja, dilengkapi demo proyek mahasiswa dan sesi tanya jawab interaktif.</p>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -1092,53 +1071,34 @@
             </div>
 
             <div class="prestasi-timeline">
-                <!-- Item 1 -->
+                @foreach($prestasi as $item)
                 <div class="prestasi-item" data-animate>
                     <div class="prestasi-content">
-                        <div class="prestasi-year">🗓️ 2026</div>
-                        <div class="prestasi-icon">🏆</div>
-                        <h3>Juara 1 Gemastik XVI</h3>
-                        <p>Tim lab berhasil meraih juara pertama dalam Pagelaran Mahasiswa Nasional bidang Teknologi Informasi dan Komunikasi kategori Keamanan Siber.</p>
-                        <span class="prestasi-medal medal-gold">🥇 Gold Medal</span>
+                        <div class="prestasi-year">🗓️ {{ $item->tahun }}</div>
+                        <div class="prestasi-icon">{!! $item->ikon ?: '🏆' !!}</div>
+                        <h3>{{ $item->judul }}</h3>
+                        <p>{{ $item->deskripsi }}</p>
+                        @php
+                            $medalColor = match($item->medali) {
+                                'gold' => 'medal-gold',
+                                'silver' => 'medal-silver',
+                                'bronze' => 'medal-bronze',
+                                'champion' => 'medal-champion',
+                                default => 'medal-gold',
+                            };
+                            $medalText = match($item->medali) {
+                                'gold' => '🥇 Gold Medal',
+                                'silver' => '🥈 Silver Medal',
+                                'bronze' => '🥉 Bronze Medal',
+                                'champion' => '🏅 Best/Champion',
+                                default => '🥇 Gold Medal',
+                            };
+                        @endphp
+                        <span class="prestasi-medal {{ $medalColor }}">{{ $medalText }}</span>
                     </div>
                     <div class="prestasi-dot"></div>
                 </div>
-
-                <!-- Item 2 -->
-                <div class="prestasi-item" data-animate>
-                    <div class="prestasi-content">
-                        <div class="prestasi-year">🗓️ 2025</div>
-                        <div class="prestasi-icon">🎖️</div>
-                        <h3>Best Paper Award - ICSEC 2025</h3>
-                        <p>Paper penelitian tentang optimisasi jaringan kampus menggunakan SDN mendapat penghargaan Best Paper pada konferensi internasional ICSEC.</p>
-                        <span class="prestasi-medal medal-champion">🏅 Best Paper</span>
-                    </div>
-                    <div class="prestasi-dot"></div>
-                </div>
-
-                <!-- Item 3 -->
-                <div class="prestasi-item" data-animate>
-                    <div class="prestasi-content">
-                        <div class="prestasi-year">🗓️ 2025</div>
-                        <div class="prestasi-icon">🥈</div>
-                        <h3>Runner Up Hackathon Nasional</h3>
-                        <p>Tim mahasiswa lab komputer berhasil menjadi runner up dalam Hackathon Nasional dengan solusi Smart Campus berbasis IoT dan Machine Learning.</p>
-                        <span class="prestasi-medal medal-silver">🥈 Silver Medal</span>
-                    </div>
-                    <div class="prestasi-dot"></div>
-                </div>
-
-                <!-- Item 4 -->
-                <div class="prestasi-item" data-animate>
-                    <div class="prestasi-content">
-                        <div class="prestasi-year">🗓️ 2024</div>
-                        <div class="prestasi-icon">🏅</div>
-                        <h3>Juara 3 Kompetisi Web Design</h3>
-                        <p>Mahasiswa dari Laboratorium Web Development berhasil meraih juara 3 pada ajang kompetisi desain web tingkat nasional dengan UI/UX inovatif.</p>
-                        <span class="prestasi-medal medal-bronze">🥉 Bronze Medal</span>
-                    </div>
-                    <div class="prestasi-dot"></div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -1156,41 +1116,22 @@
             </div>
 
             <div class="gallery-grid">
-                <!-- Large Item -->
-                <div class="gallery-item" data-animate data-lightbox data-caption="Lab Komputer Utama - Dilengkapi 40 unit PC spesifikasi tinggi">
-                    <img src="{{ asset('images/landing/lab_facility_1.png') }}" alt="Lab Komputer Utama" loading="lazy">
+                @foreach($fasilitas as $item)
+                <div class="gallery-item" data-animate data-lightbox data-caption="{{ $item->judul }} - {{ $item->deskripsi }}">
+                    @if($item->gambar)
+                        <img src="{{ asset('images/landing/' . $item->gambar) }}" alt="{{ $item->judul }}" loading="lazy">
+                    @else
+                        <img src="{{ asset('images/landing/placeholder.png') }}" alt="{{ $item->judul }}" loading="lazy">
+                    @endif
                     <div class="gallery-overlay">
                         <div class="gallery-overlay-icon">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                         </div>
-                        <h4>Lab Komputer Utama</h4>
-                        <p>40 unit PC spesifikasi tinggi dengan monitor dual</p>
+                        <h4>{{ $item->judul }}</h4>
+                        <p>{{ Str::limit($item->deskripsi, 60) }}</p>
                     </div>
                 </div>
-
-                <!-- Small Item 1 -->
-                <div class="gallery-item" data-animate data-lightbox data-caption="Lab Elektronika - Peralatan lengkap untuk praktikum hardware">
-                    <img src="{{ asset('images/landing/lab_facility_2.png') }}" alt="Lab Elektronika" loading="lazy">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-icon">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
-                        </div>
-                        <h4>Lab Elektronika</h4>
-                        <p>Peralatan praktikum lengkap</p>
-                    </div>
-                </div>
-
-                <!-- Small Item 2 -->
-                <div class="gallery-item" data-animate data-lightbox data-caption="Lab Jaringan - Server rack dan perangkat networking profesional">
-                    <img src="{{ asset('images/landing/lab_facility_3.png') }}" alt="Lab Jaringan" loading="lazy">
-                    <div class="gallery-overlay">
-                        <div class="gallery-overlay-icon">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
-                        </div>
-                        <h4>Lab Jaringan</h4>
-                        <p>Server rack & networking profesional</p>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -1206,15 +1147,19 @@
                     <span class="nav-brand-text">SILab</span>
                 </a>
                 <p class="footer-brand-desc">
-                    Sistem informasi manajemen inventaris laboratorium komputer terpadu. Memudahkan pengelolaan aset, peminjaman peralatan, dan booking ruangan secara digital.
+                    {{ $settings['footer_desc'] ?? 'Sistem informasi manajemen inventaris laboratorium komputer terpadu. Memudahkan pengelolaan aset, peminjaman peralatan, dan booking ruangan secara digital.' }}
                 </p>
                 <div class="footer-social">
-                    <a href="https://www.instagram.com/trpl.polinela" aria-label="Instagram">
+                    @if(isset($settings['social_instagram']) && $settings['social_instagram'])
+                    <a href="{{ $settings['social_instagram'] }}" aria-label="Instagram">
                         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                     </a>
-                    <a href="https://www.youtube.com/@trplpolinela" aria-label="YouTube">
+                    @endif
+                    @if(isset($settings['social_youtube']) && $settings['social_youtube'])
+                    <a href="{{ $settings['social_youtube'] }}" aria-label="YouTube">
                         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                     </a>
+                    @endif
                     <a href="#" aria-label="GitHub">
                         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
                     </a>
@@ -1244,10 +1189,10 @@
             <div class="footer-col">
                 <h4 class="footer-col-title">Kontak</h4>
                 <ul>
-                    <li><a href="#">📍 Kampus Politeknik Negeri Lampung, Jl. Soekarno-Hatta No.10, Bandar Lampung, Lampung, Indonesia. 35141</a></li>
-                    <li><a href="#">📞 (021) 123-4567</a></li>
-                    <li><a href="#">✉️ trpl@polinela.ac.id</a></li>
-                    <li><a href="#">🕐 Sen-Jum, 08:00-17:00</a></li>
+                    <li><a href="#">📍 {{ $settings['footer_address'] ?? 'Kampus Politeknik Negeri Lampung, Jl. Soekarno-Hatta No.10, Bandar Lampung, Lampung, Indonesia. 35141' }}</a></li>
+                    <li><a href="#">📞 {{ $settings['footer_phone'] ?? '(021) 123-4567' }}</a></li>
+                    <li><a href="#">✉️ {{ $settings['footer_email'] ?? 'trpl@polinela.ac.id' }}</a></li>
+                    <li><a href="#">🕐 {{ $settings['footer_hours'] ?? 'Sen-Jum, 08:00-17:00' }}</a></li>
                 </ul>
             </div>
         </div>
