@@ -18,12 +18,29 @@ class PeminjamanController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Peminjaman::class);
 
-        // Ambil semua data peminjaman terbaru beserta relasi barangs
-        $peminjamans = Peminjaman::with(['user:id,name,email', 'barangs:id,nama_barang,barcode'])->latest()->paginate(20);
+        $search = trim((string) $request->input('search'));
+        $peminjamans = Peminjaman::with(['user:id,name,email', 'barangs:id,nama_barang,barcode'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('nama_peminjam', 'like', "%{$search}%")
+                        ->orWhere('keperluan', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('barangs', function ($barangQuery) use ($search) {
+                            $barangQuery->where('nama_barang', 'like', "%{$search}%")
+                                ->orWhere('barcode', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Ambil data barang yang tersedia untuk form pilihan
         $barangs = Barang::select(['id', 'nama_barang', 'barcode', 'kondisi'])
@@ -33,7 +50,7 @@ class PeminjamanController extends Controller
         $users = User::select(['id', 'name', 'email'])
             ->where('role', 'peminjam')->get();
 
-        return view('operator.peminjaman.index', compact('peminjamans', 'barangs', 'users'));
+        return view('operator.peminjaman.index', compact('peminjamans', 'barangs', 'users', 'search'));
     }
 
     public function store(StorePeminjamanRequest $request)
