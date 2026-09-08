@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\BookingConflictService;
+use DomainException;
 
 class BookingRuanganController extends Controller
 {
@@ -81,8 +82,8 @@ class BookingRuanganController extends Controller
 
     public function store(StoreBookingRequest $request)
     {
-
-        DB::transaction(function() use ($request) {
+        try {
+            DB::transaction(function() use ($request) {
             // Upload surat with hashed name to private disk
             $nama_surat = null;
             if ($request->hasFile('surat_peminjaman')) {
@@ -102,7 +103,7 @@ class BookingRuanganController extends Controller
             );
 
             if ($bentrok) {
-                throw new \Exception('BENTROK_BOOKING');
+                throw new DomainException('Ruangan sudah memiliki booking atau pengajuan lain pada waktu tersebut.');
             }
 
             // CEK BENTROK DENGAN JADWAL KULIAH
@@ -124,7 +125,11 @@ class BookingRuanganController extends Controller
                     );
 
                 if ($bentrokKuliah) {
-                    throw new \Exception('BENTROK_KULIAH:' . $bentrokKuliah->mata_kuliah);
+                    throw new DomainException(
+                        'Ruangan digunakan untuk jadwal kuliah' .
+                        ($bentrokKuliah->mata_kuliah ? ' "' . $bentrokKuliah->mata_kuliah . '"' : '') .
+                        ' pada waktu tersebut.'
+                    );
                 }
             }
 
@@ -139,7 +144,12 @@ class BookingRuanganController extends Controller
                 'surat_peminjaman' => $nama_surat,
                 'status'          => 'disetujui'
             ]);
-        });
+            });
+        } catch (DomainException $exception) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['booking' => $exception->getMessage()]);
+        }
 
         return redirect()->route('booking.index')->with('success', 'Jadwal ruangan berhasil ditambahkan!');
     }
@@ -175,7 +185,8 @@ class BookingRuanganController extends Controller
         }
 
         // Re-check overlap inside transaction before approving
-        DB::transaction(function() use ($booking) {
+        try {
+            DB::transaction(function() use ($booking) {
             $locked = BookingRuangan::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             Ruangan::whereKey($locked->ruangan_id)->lockForUpdate()->firstOrFail();
             $bentrok = app(BookingConflictService::class)->hasBookingConflict(
@@ -184,7 +195,7 @@ class BookingRuanganController extends Controller
             );
 
             if ($bentrok) {
-                throw new \Exception('BENTROK_APPROVE');
+                throw new DomainException('Booking tidak dapat disetujui karena waktunya bertabrakan dengan booking lain.');
             }
 
             $locked->update(['status' => 'disetujui']);
@@ -193,7 +204,10 @@ class BookingRuanganController extends Controller
                 'booking_id' => $booking->id,
                 'admin_id' => auth()->id()
             ]);
-        });
+            });
+        } catch (DomainException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Pengajuan ruangan berhasil disetujui!');
     }
