@@ -1079,19 +1079,19 @@
                         <h3>{{ $item->judul }}</h3>
                         <p>{{ $item->deskripsi }}</p>
                         @php
-                            $medalColor = match($item->medali) {
+                            $medalColor = match(strtolower($item->medali)) {
                                 'gold' => 'medal-gold',
                                 'silver' => 'medal-silver',
                                 'bronze' => 'medal-bronze',
                                 'champion' => 'medal-champion',
-                                default => 'medal-gold',
+                                default => 'medal-champion',
                             };
-                            $medalText = match($item->medali) {
+                            $medalText = match(strtolower($item->medali)) {
                                 'gold' => '🥇 Gold Medal',
                                 'silver' => '🥈 Silver Medal',
                                 'bronze' => '🥉 Bronze Medal',
                                 'champion' => '🏅 Best/Champion',
-                                default => '🥇 Gold Medal',
+                                default => '🏅 ' . $item->medali,
                             };
                         @endphp
                         <span class="prestasi-medal {{ $medalColor }}">{{ $medalText }}</span>
