@@ -42,6 +42,18 @@
 }
 
 @layer components {
+    .responsive-table {
+        @apply w-full min-w-[640px] text-sm;
+    }
+
+    .table-container {
+        @apply w-full overflow-x-auto rounded-lg;
+    }
+
+    .touch-button {
+        @apply min-h-10 min-w-10;
+    }
+
     .badge {
         @apply px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase;
     }

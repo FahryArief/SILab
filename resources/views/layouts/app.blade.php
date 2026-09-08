@@ -16,10 +16,16 @@
 </head>
 
 <body class="font-sans antialiased text-gray-900 flex h-screen overflow-hidden bg-gray-50"
-      x-data="{ isCollapsed: localStorage.getItem('sidebar_state') === 'true' }"
-      x-init="$watch('isCollapsed', val => localStorage.setItem('sidebar_state', val))">
+      x-data="{ isCollapsed: localStorage.getItem('sidebar_state') === 'true', mobileSidebarOpen: false }"
+      x-init="$watch('isCollapsed', val => localStorage.setItem('sidebar_state', val)); $watch('mobileSidebarOpen', val => document.body.classList.toggle('overflow-hidden', val))"
+      @keydown.escape.window="mobileSidebarOpen = false">
 
-    <aside :class="isCollapsed ? 'w-20' : 'w-64'" class="bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative">
+    <div x-show="mobileSidebarOpen" x-transition.opacity class="fixed inset-0 bg-slate-950/60 z-40 md:hidden" @click="mobileSidebarOpen = false" aria-hidden="true"></div>
+
+    <aside :class="[
+        isCollapsed ? 'md:w-20' : 'md:w-64',
+        mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+    ]" class="fixed inset-y-0 left-0 w-72 bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-50 transition-all duration-300 ease-in-out shrink-0 relative md:relative">
 
         <div class="h-16 flex items-center justify-center bg-[#0f172a] text-white font-bold text-xl tracking-wider border-b border-slate-800 overflow-hidden shrink-0">
             <svg class="w-6 h-6 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -192,7 +198,10 @@
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-30 shadow-sm shrink-0">
 
             <div class="flex items-center flex-1">
-                <button @click="isCollapsed = !isCollapsed" class="mr-4 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors p-1 rounded-md hover:bg-gray-100">
+                <button @click="mobileSidebarOpen = true" class="mr-2 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors p-2 rounded-md hover:bg-gray-100 md:hidden" aria-label="Buka menu navigasi">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <button @click="isCollapsed = !isCollapsed" class="hidden md:block mr-4 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors p-1 rounded-md hover:bg-gray-100" aria-label="Ciutkan sidebar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
 
@@ -262,7 +271,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-8 relative">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
             {{ $slot }}
         </main>
 
