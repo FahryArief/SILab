@@ -38,6 +38,8 @@
         /* Kecil: 20x12mm — minimal, QR + code only */
         .label.size-kecil { width: 20mm; height: 12mm; padding: 1mm; }
         .label.size-kecil .lab-title { display: none; }
+        .label.size-kecil .label-header img { width: 3mm; height: 3mm; }
+        .label.size-kecil .polinela-mark { font-size: 3px; }
         .label.size-kecil .nama-barang { display: none; }
         .label.size-kecil .qr-img svg { width: 8mm !important; height: 8mm !important; }
         .label.size-kecil .info { font-size: 4px; letter-spacing: 0; }
@@ -46,6 +48,8 @@
         /* Sedang: 40x25mm */
         .label.size-sedang { width: 40mm; height: 25mm; padding: 1.5mm; }
         .label.size-sedang .lab-title { font-size: 5px; letter-spacing: 1px; margin-bottom: 1px; }
+        .label.size-sedang .label-header img { width: 4mm; height: 4mm; }
+        .label.size-sedang .polinela-mark { font-size: 4px; }
         .label.size-sedang .nama-barang { font-size: 7px; margin-bottom: 1px; }
         .label.size-sedang .qr-img svg { width: 13mm !important; height: 13mm !important; }
         .label.size-sedang .info { font-size: 5px; }
@@ -54,6 +58,7 @@
         /* Standar: 66x34mm (default) */
         .label.size-standar { width: 66mm; height: 34mm; padding: 2mm; }
         .label.size-standar .lab-title { font-size: 7px; letter-spacing: 2px; margin-bottom: 2px; }
+        .label.size-standar .label-header img { width: 6mm; height: 6mm; }
         .label.size-standar .nama-barang { font-size: 8px; margin-bottom: 1px; }
         .label.size-standar .qr-img svg { width: 18mm !important; height: 18mm !important; }
         .label.size-standar .info { font-size: 6px; letter-spacing: 0.5px; }
@@ -62,11 +67,16 @@
         /* Besar: 90x50mm */
         .label.size-besar { width: 90mm; height: 50mm; padding: 3mm; }
         .label.size-besar .lab-title { font-size: 8px; letter-spacing: 2px; margin-bottom: 3px; }
+        .label.size-besar .label-header img { width: 9mm; height: 9mm; }
+        .label.size-besar .polinela-mark { font-size: 10px; }
         .label.size-besar .nama-barang { font-size: 11px; margin-bottom: 2px; }
         .label.size-besar .qr-img svg { width: 28mm !important; height: 28mm !important; }
         .label.size-besar .info { font-size: 8px; letter-spacing: 0.5px; }
         .label.size-besar .item-extra { font-size: 6px; color: #94a3b8; margin-top: 1px; }
 
+        .label-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .label-header img { width: 7mm; height: 7mm; object-fit: contain; }
+        .polinela-mark { color: #123b78; font-size: 7px; font-weight: 900; line-height: 0.9; letter-spacing: -0.3px; }
         .lab-title { font-weight: 800; color: #6366f1; text-transform: uppercase; width: 100%; }
         .nama-barang { font-weight: 900; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         .qr-img { margin: 1mm 0; }
@@ -107,7 +117,11 @@
 
     <div class="preview-area">
         <div class="label size-standar" id="labelBox">
-            <div class="lab-title">Inventaris TRPL</div>
+            <div class="label-header">
+                <img src="{{ asset('images/trpl.png') }}" alt="Logo TRPL">
+                <div class="lab-title">Inventaris TRPL</div>
+                <div class="polinela-mark">POLINELA</div>
+            </div>
             <div class="nama-barang">{{ $barang->nama_barang }}</div>
             <div class="qr-img">
                 {!! QrCode::size(200)->generate(url('/scan-barang/' . $barang->barcode)) !!}
