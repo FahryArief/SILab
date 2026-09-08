@@ -11,10 +11,10 @@
                 <p class="text-indigo-100 text-sm max-w-lg">Selamat datang di Portal Peminjaman InvenTrack. Cek status pengajuanmu atau telusuri katalog alat dan ruangan yang tersedia di Laboratorium.</p>
                 <div class="mt-6 flex gap-3">
                     <button class="bg-white text-indigo-600 px-4 py-2 rounded-md text-sm font-bold shadow hover:bg-indigo-50 transition">
-                        Lihat Katalog Alat
+                       <a href="{{ route('peminjam.katalog.barang') }}"> Lihat Katalog Barang
                     </button>
                     <button class="bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-bold shadow hover:bg-indigo-400 transition border border-indigo-400">
-                        Cek Jadwal Ruangan
+                        <a href="{{ route('peminjam.katalog.ruangan') }}">Cek Jadwal Ruangan
                     </button>
                 </div>
             </div>

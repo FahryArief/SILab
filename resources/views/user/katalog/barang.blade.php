@@ -21,7 +21,10 @@
                 <p class="text-sm text-gray-500">Pilih alat yang tersedia dan ajukan peminjaman ke Operator Lab.</p>
             </div>
             <div class="w-full md:w-72">
-                <input type="text" placeholder="Cari nama barang..." class="w-full border-gray-300 rounded-md text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <form action="{{ route('peminjam.katalog.barang') }}" method="GET" class="w-full">
+                    @csrf
+                    <input type="text" name="search" placeholder="Cari nama barang..." value="{{ request()->search }}" class="w-full border-gray-300 rounded-md text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </form>
             </div>
         </div>
     </div>
