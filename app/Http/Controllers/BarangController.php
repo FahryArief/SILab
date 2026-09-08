@@ -47,12 +47,12 @@ class BarangController extends Controller
                 $foto->storeAs('foto_barang', $default_foto, 'public');
             }
 
-            foreach ($request->items as $item) {
+            foreach ($request->items as $itemIndex => $item) {
                 // Gunakan foto default jika item tidak punya foto khusus
                 $foto_item = $default_foto;
 
-                if (isset($item['foto']) && $request->hasFile("items.{$item['kode_inventaris']}.foto")) {
-                    $fotoFile = $request->file("items.{$item['kode_inventaris']}.foto");
+                if ($request->hasFile("items.{$itemIndex}.foto")) {
+                    $fotoFile = $request->file("items.{$itemIndex}.foto");
                     $foto_item = Str::uuid() . '.' . $fotoFile->getClientOriginalExtension();
                     $fotoFile->storeAs('foto_barang', $foto_item, 'public');
                 }

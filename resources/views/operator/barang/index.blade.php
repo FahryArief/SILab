@@ -43,11 +43,11 @@
         @endif
 
         {{-- Toolbar --}}
-        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
-            <div class="flex flex-1 w-full max-w-md">
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(220px,1fr)_auto] items-center mb-4 gap-3">
+            <div class="flex w-full min-w-0">
                 <input type="text" x-model="search" placeholder="Cari barang..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
-            <div class="flex gap-2 w-full md:w-auto flex-wrap items-center">
+            <div class="flex gap-2 w-full lg:w-auto flex-wrap items-center">
                 <select x-model="filterRuangan" class="border-gray-300 rounded-md shadow-sm text-sm">
                     <option value="">Semua Ruangan</option>
                     @foreach($ruangans as $ruang)
