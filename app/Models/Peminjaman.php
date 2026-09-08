@@ -46,7 +46,7 @@ class Peminjaman extends Model
     {
         return $this->status === 'disetujui'
             && $this->tanggal_kembali !== null
-            && now()->startOfDay()->gt($this->tanggal_kembali);
+            && today()->gt($this->tanggal_kembali);
     }
 
     public function getHariTerlambatAttribute(): int
@@ -55,6 +55,6 @@ class Peminjaman extends Model
             return 0;
         }
 
-        return $this->tanggal_kembali->diffInDays(now()->startOfDay());
+        return $this->tanggal_kembali->diffInDays(today());
     }
 }

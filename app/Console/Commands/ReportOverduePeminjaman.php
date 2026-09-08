@@ -15,7 +15,7 @@ class ReportOverduePeminjaman extends Command
     {
         $count = Peminjaman::query()
             ->where('status', 'disetujui')
-            ->whereDate('tanggal_kembali', '<', now()->toDateString())
+            ->whereDate('tanggal_kembali', '<', today()->toDateString())
             ->count();
 
         $this->info("{$count} peminjaman terlambat terdeteksi.");
