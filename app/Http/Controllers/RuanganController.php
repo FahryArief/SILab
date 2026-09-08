@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreRuanganRequest;
+use App\Http\Requests\UpdateRuanganRequest;
 use App\Models\Ruangan;
 use Illuminate\Support\Facades\Storage; // <-- Tambahkan ini untuk kelola file
 use App\Exports\RuanganExport;
@@ -21,12 +23,8 @@ class RuanganController extends Controller
 {
     return view('operator.ruangan.create');
 }
-    public function store(Request $request)
+    public function store(StoreRuanganRequest $request)
     {
-        $request->validate([
-            'nama_ruangan' => 'required',
-            'foto_ruangan' => 'nullable|image|mimes:jpeg,png,jpg|max:2048' // Maksimal 2MB
-        ]);
 
         // Logika menyimpan foto
         $nama_foto = null;
@@ -57,12 +55,8 @@ class RuanganController extends Controller
         return view('operator.ruangan.edit', compact('ruangan'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateRuanganRequest $request, $id)
     {
-        $request->validate([
-            'nama_ruangan' => 'required',
-            'foto_ruangan' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-        ]);
 
         $ruangan = Ruangan::findOrFail($id);
         $nama_foto = $ruangan->foto_ruangan; // Simpan nama foto lama sementara

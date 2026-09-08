@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Requests\StoreBookingRequest;
 use App\Models\BookingRuangan;
 use App\Models\Ruangan;
 use App\Models\User;
@@ -70,21 +71,8 @@ class BookingRuanganController extends Controller
         ));
     }
 
-    public function store(Request $request)
+    public function store(StoreBookingRequest $request)
     {
-        $request->validate([
-            'user_id'         => 'nullable|exists:users,id',
-            'nama_peminjam'   => 'required_without:user_id|nullable|string|max:255',
-            'ruangan_id'      => 'required|exists:ruangans,id',
-            'tanggal_booking' => 'required|date',
-            'waktu_mulai'     => 'required',
-            'waktu_selesai'   => 'required|after:waktu_mulai',
-            'keperluan'       => 'required|string|max:255',
-            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        ], [
-            'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
-            'nama_peminjam.required_without' => 'Nama peminjam wajib diisi jika tidak memilih akun mahasiswa!',
-        ]);
 
         DB::transaction(function() use ($request) {
             // Upload surat with hashed name to private disk

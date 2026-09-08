@@ -6,6 +6,8 @@ use App\Models\JadwalKuliah;
 use App\Models\Ruangan;
 use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreJadwalKuliahRequest;
+use App\Http\Requests\UpdateJadwalKuliahRequest;
 use App\Exports\JadwalKuliahExport;
 use App\Imports\JadwalKuliahImport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -51,19 +53,8 @@ class JadwalKuliahController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreJadwalKuliahRequest $request)
     {
-        $request->validate([
-            'ruangan_id' => 'required|exists:ruangans,id',
-            'hari' => 'required|string',
-            'waktu_mulai' => 'required|date_format:H:i',
-            'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
-            'mata_kuliah' => 'required|string|max:255',
-            'dosen' => 'nullable|string|max:255',
-        ], [
-            'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
-        ]);
-
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         if (!$tahunAjaranAktif) {
             return redirect()->back()->with('error', 'Tidak ada Tahun Ajaran yang aktif. Silakan set Tahun Ajaran terlebih dahulu.');
@@ -73,14 +64,9 @@ class JadwalKuliahController extends Controller
         $bentrok = JadwalKuliah::where('ruangan_id', $request->ruangan_id)
             ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
             ->where('hari', $request->hari)
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhere(function ($q) use ($request) {
-                          $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                            ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                      });
-            })->exists();
+            ->where('waktu_mulai', '<', $request->waktu_selesai)
+            ->where('waktu_selesai', '>', $request->waktu_mulai)
+            ->exists();
 
         if ($bentrok) {
             return redirect()->back()->with('error', 'Ruangan sudah terpakai untuk jadwal kuliah lain pada waktu tersebut!');
@@ -99,19 +85,8 @@ class JadwalKuliahController extends Controller
         return redirect()->back()->with('success', 'Jadwal Kuliah berhasil ditambahkan.');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateJadwalKuliahRequest $request, $id)
     {
-        $request->validate([
-            'ruangan_id' => 'required|exists:ruangans,id',
-            'hari' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'waktu_mulai' => 'required|date_format:H:i',
-            'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
-            'mata_kuliah' => 'required|string|max:255',
-            'dosen' => 'nullable|string|max:255',
-        ], [
-            'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
-        ]);
-
         $jadwal = JadwalKuliah::findOrFail($id);
         
         // Cek bentrok dengan jadwal kuliah lain (kecuali dirinya sendiri)
@@ -119,14 +94,9 @@ class JadwalKuliahController extends Controller
             ->where('tahun_ajaran_id', $jadwal->tahun_ajaran_id)
             ->where('hari', $request->hari)
             ->where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhere(function ($q) use ($request) {
-                          $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                            ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                      });
-            })->exists();
+            ->where('waktu_mulai', '<', $request->waktu_selesai)
+            ->where('waktu_selesai', '>', $request->waktu_mulai)
+            ->exists();
 
         if ($bentrok) {
             return redirect()->back()->with('error', 'Ruangan sudah terpakai untuk jadwal kuliah lain pada waktu tersebut!');

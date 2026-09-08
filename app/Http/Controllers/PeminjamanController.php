@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Requests\StorePeminjamanRequest;
 use App\Models\Peminjaman;
 use App\Models\Barang;
 use App\Models\User;
@@ -26,18 +27,8 @@ class PeminjamanController extends Controller
         return view('operator.peminjaman.index', compact('peminjamans', 'barangs', 'users'));
     }
 
-    public function store(Request $request)
+    public function store(StorePeminjamanRequest $request)
     {
-        $request->validate([
-            'user_id' => 'nullable|exists:users,id',
-            'nama_peminjam' => 'required_without:user_id|nullable|string|max:255',
-            'barang_ids' => 'required|array|min:1',
-            'barang_ids.*' => 'exists:barangs,id|distinct',
-            'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'required|date|after_or_equal:tanggal_pinjam',
-            'keperluan' => 'required|string|max:255',
-            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        ]);
 
         // Cek ketersediaan barang
         $unavailableCount = Barang::whereIn('id', $request->barang_ids)
