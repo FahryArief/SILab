@@ -14,12 +14,20 @@ use Illuminate\Validation\ValidationException;
 class KatalogController extends Controller
 {
     // 1. Menampilkan Katalog Barang
-    public function barang()
+    public function barang(Request $request)
     {
-        // Ambil semua barang yang tersedia, mungkin dikelompokkan di view
-        $barangs = Barang::with(['kategori:id,nama_kategori'])
-            ->where('status_peminjaman', 'Tersedia')
-            ->latest()->paginate(24)->withQueryString();
+        $query = Barang::with(['kategori:id,nama_kategori'])
+            ->where('status_peminjaman', 'Tersedia');
+        
+        if ($request->search) {
+            $query->where('nama_barang', 'like', '%' . $request->search . '%')
+                ->orWhere('barcode', 'like', '%' . $request->search . '%')
+                ->orWhereHas('kategori', function ($q) use ($request) {
+                    $q->where('nama_kategori', 'like', '%' . $request->search . '%');
+                });
+        }
+        
+        $barangs = $query->latest()->paginate(24)->withQueryString();
         return view('user.katalog.barang', compact('barangs'));
     }
 
