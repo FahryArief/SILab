@@ -5,7 +5,7 @@
 
     <div class="max-w-7xl mx-auto space-y-6">
 
-        @if($total_pending > 0 || $peminjaman_terlambat > 0)
+        @if($total_pending > 0 || $peminjaman_terlambat > 0 || $audit_perlu_dikerjakan > 0)
             <div class="space-y-3">
                 @if($total_pending > 0)
                     <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" role="alert">
@@ -24,6 +24,16 @@
                             <p class="font-bold">{{ $peminjaman_terlambat }} peminjaman telah melewati tenggat.</p>
                             <p class="mt-1">Segera tindak lanjuti pengembalian barang.</p>
                             <a href="{{ route('peminjaman.index') }}" class="inline-block mt-2 font-bold underline">Lihat peminjaman</a>
+                        </div>
+                    </div>
+                @endif
+                @if($audit_perlu_dikerjakan > 0)
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                        <span class="text-xl">🔍</span>
+                        <div class="text-sm text-indigo-900">
+                            <p class="font-bold">{{ $audit_perlu_dikerjakan }} periode audit perlu dikerjakan.</p>
+                            <p class="mt-1">Selesaikan pemeriksaan inventaris atau perbaiki laporan audit yang dikembalikan.</p>
+                            <a href="{{ route('admin.audit.periode.index') }}" class="inline-block mt-2 font-bold underline">Buka audit inventaris</a>
                         </div>
                     </div>
                 @endif

@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\Ruangan;
 use App\Models\BookingRuangan;
 use App\Models\Peminjaman;
+use App\Models\AuditPeriode;
 
 class OperatorDashboardController extends Controller
 {
@@ -23,6 +24,7 @@ class OperatorDashboardController extends Controller
         $peminjaman_terlambat = Peminjaman::where('status', 'disetujui')
             ->whereDate('tanggal_kembali', '<', now()->toDateString())
             ->count();
+        $audit_perlu_dikerjakan = AuditPeriode::whereIn('status', ['open', 'revisi'])->count();
 
         // 3. Ambil Aktivitas/Pengajuan Terbaru (Masing-masing 3 terbaru)
         $recent_bookings = BookingRuangan::with([
@@ -36,6 +38,7 @@ class OperatorDashboardController extends Controller
             'total_barang', 'total_ruangan',
             'booking_pending', 'peminjaman_pending', 'total_pending',
             'peminjaman_terlambat',
+            'audit_perlu_dikerjakan',
             'recent_bookings', 'recent_peminjamans'
         ));
     }
