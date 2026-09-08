@@ -41,13 +41,17 @@ class AuditRuanganController extends Controller
             return redirect()->back()->with('error', 'Tidak ada Tahun Ajaran yang aktif.');
         }
 
-        // Update or create audit entry for this ruangan in this periode
+        $ruangan = Ruangan::findOrFail($request->ruangan_id);
+
         AuditRuangan::updateOrCreate(
             [
                 'audit_periode_id' => $request->audit_periode_id,
                 'ruangan_id' => $request->ruangan_id,
             ],
             [
+                'nama_ruangan_snapshot' => $ruangan->nama_ruangan,
+                'kode_ruangan_snapshot' => $ruangan->kode_ruangan,
+                'fasilitas_snapshot' => $ruangan->fasilitas,
                 'tahun_ajaran_id' => $tahunAjaranAktif->id,
                 'teknisi_id' => auth()->id(),
                 'fasilitas_audit' => $request->fasilitas_audit ?? [],
@@ -57,7 +61,6 @@ class AuditRuanganController extends Controller
         );
 
         // Update terakhir diperiksa di master Ruangan
-        $ruangan = Ruangan::findOrFail($request->ruangan_id);
         $ruangan->update([
             'terakhir_diperiksa_at' => Carbon::now(),
         ]);
@@ -109,6 +112,9 @@ class AuditRuanganController extends Controller
                     'ruangan_id' => $ruanganId,
                 ],
                 [
+                    'nama_ruangan_snapshot' => $ruangan->nama_ruangan,
+                    'kode_ruangan_snapshot' => $ruangan->kode_ruangan,
+                    'fasilitas_snapshot' => $ruangan->fasilitas,
                     'tahun_ajaran_id' => $tahunAjaranAktif->id,
                     'teknisi_id' => $teknisiId,
                     'fasilitas_audit' => $fasilitasAudit,
