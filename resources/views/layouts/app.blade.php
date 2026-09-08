@@ -162,6 +162,16 @@
                 </a>
             @endif
 
+            @if(auth()->user()->role !== 'peminjam')
+                <p x-show="!isCollapsed" class="px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-4">Website Publik</p>
+                <div x-show="isCollapsed" class="h-4"></div>
+
+                <a href="{{ route('admin.landing.settings.index') }}" title="Pengaturan Landing Page" class="flex items-center px-6 py-3 {{ request()->routeIs('admin.landing.*') ? 'bg-slate-800 text-white border-l-4 border-indigo-500' : 'hover:bg-slate-800 hover:text-white' }} transition-colors group">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Landing Page</span>
+                </a>
+            @endif
+
         </nav>
 
         <div class="mt-auto border-t border-slate-800 p-4">
