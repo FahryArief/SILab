@@ -98,7 +98,11 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($pinjam->status == 'pending')
+                                @if($pinjam->terlambat)
+                                    <span class="px-2 py-1 rounded text-[9px] font-bold uppercase bg-red-100 text-red-700 border border-red-200">
+                                        Terlambat {{ $pinjam->hari_terlambat }} hari
+                                    </span>
+                                @elseif($pinjam->status == 'pending')
                                     <span class="px-2 py-1 rounded text-[9px] font-bold uppercase bg-amber-100 text-amber-600">
                                         Menunggu Validasi
                                     </span>

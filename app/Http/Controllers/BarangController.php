@@ -62,6 +62,7 @@ class BarangController extends Controller
                     'kategori_id' => $request->kategori_id,
                     'ruangan_id'  => $item['ruangan_id'] ?? $request->ruangan_id,
                     'barcode'     => $item['kode_inventaris'],
+                    'deskripsi'   => $request->deskripsi,
                     'foto_barang' => $foto_item,
                     'kondisi'     => $item['kondisi'],
                     'kepemilikan' => $item['kepemilikan'],

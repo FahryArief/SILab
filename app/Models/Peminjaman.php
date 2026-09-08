@@ -20,6 +20,14 @@ class Peminjaman extends Model
         'catatan_admin',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'tanggal_pinjam' => 'date',
+            'tanggal_kembali' => 'date',
+        ];
+    }
+
     // Relasi ke Peminjam
     public function user()
     {
@@ -39,5 +47,14 @@ class Peminjaman extends Model
         return $this->status === 'disetujui'
             && $this->tanggal_kembali !== null
             && now()->startOfDay()->gt($this->tanggal_kembali);
+    }
+
+    public function getHariTerlambatAttribute(): int
+    {
+        if (!$this->terlambat) {
+            return 0;
+        }
+
+        return $this->tanggal_kembali->diffInDays(now()->startOfDay());
     }
 }
