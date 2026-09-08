@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreRuanganRequest;
 use App\Http\Requests\UpdateRuanganRequest;
 use App\Models\Ruangan;
-use Illuminate\Support\Facades\Storage; // <-- Tambahkan ini untuk kelola file
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use App\Exports\RuanganExport;
 use App\Imports\RuanganImport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -25,26 +27,27 @@ class RuanganController extends Controller
 }
     public function store(StoreRuanganRequest $request)
     {
+        DB::transaction(function() use ($request) {
+            // Logika menyimpan foto
+            $nama_foto = null;
+            if ($request->hasFile('foto_ruangan')) {
+                $foto = $request->file('foto_ruangan');
+                $nama_foto = Str::uuid() . '.' . $foto->getClientOriginalExtension();
+                $foto->storeAs('foto_ruangan', $nama_foto, 'public');
+            }
 
-        // Logika menyimpan foto
-        $nama_foto = null;
-        if ($request->hasFile('foto_ruangan')) {
-            $foto = $request->file('foto_ruangan');
-            $nama_foto = time() . '_' . $foto->getClientOriginalName();
-            $foto->storeAs('foto_ruangan', $nama_foto, 'public');
-        }
+            $ruangan = Ruangan::create([
+                'nama_ruangan' => $request->nama_ruangan,
+                'kapasitas'    => $request->kapasitas,
+                'lokasi'       => $request->lokasi,
+                'keterangan'   => $request->keterangan,
+                'fasilitas'    => $request->fasilitas,
+                'foto_ruangan' => $nama_foto
+            ]);
 
-        $ruangan = Ruangan::create([
-            'nama_ruangan' => $request->nama_ruangan,
-            'kapasitas'    => $request->kapasitas,
-            'lokasi'       => $request->lokasi,
-            'keterangan'   => $request->keterangan,
-            'fasilitas'    => $request->fasilitas,
-            'foto_ruangan' => $nama_foto
-        ]);
-
-        $kode = 'RM-' . strtoupper(str_replace(' ', '', substr($ruangan->nama_ruangan, 0, 8))) . '-' . str_pad($ruangan->id, 3, '0', STR_PAD_LEFT);
-        $ruangan->update(['kode_ruangan' => $kode]);
+            $kode = 'RM-' . strtoupper(str_replace(' ', '', substr($ruangan->nama_ruangan, 0, 8))) . '-' . str_pad($ruangan->id, 3, '0', STR_PAD_LEFT);
+            $ruangan->update(['kode_ruangan' => $kode]);
+        });
 
         return redirect()->back()->with('success', 'Ruangan baru berhasil ditambahkan!');
     }
@@ -57,31 +60,33 @@ class RuanganController extends Controller
 
     public function update(UpdateRuanganRequest $request, $id)
     {
-
         $ruangan = Ruangan::findOrFail($id);
-        $nama_foto = $ruangan->foto_ruangan; // Simpan nama foto lama sementara
+        
+        DB::transaction(function() use ($request, $ruangan) {
+            $nama_foto = $ruangan->foto_ruangan; // Simpan nama foto lama sementara
 
-        // Jika ada foto baru yang diupload
-        if ($request->hasFile('foto_ruangan')) {
-            // Hapus foto lama jika ada
-            if ($nama_foto && Storage::disk('public')->exists('foto_ruangan/' . $nama_foto)) {
-                Storage::disk('public')->delete('foto_ruangan/' . $nama_foto);
+            // Jika ada foto baru yang diupload
+            if ($request->hasFile('foto_ruangan')) {
+                // Hapus foto lama jika ada
+                if ($nama_foto && Storage::disk('public')->exists('foto_ruangan/' . $nama_foto)) {
+                    Storage::disk('public')->delete('foto_ruangan/' . $nama_foto);
+                }
+
+                // Simpan foto baru dengan UUID
+                $foto = $request->file('foto_ruangan');
+                $nama_foto = Str::uuid() . '.' . $foto->getClientOriginalExtension();
+                $foto->storeAs('foto_ruangan', $nama_foto, 'public');
             }
 
-            // Simpan foto baru
-            $foto = $request->file('foto_ruangan');
-            $nama_foto = time() . '_' . $foto->getClientOriginalName();
-            $foto->storeAs('foto_ruangan', $nama_foto, 'public');
-        }
-
-        $ruangan->update([
-            'nama_ruangan' => $request->nama_ruangan,
-            'kapasitas'    => $request->kapasitas,
-            'lokasi'       => $request->lokasi,
-            'keterangan'   => $request->keterangan,
-            'fasilitas'    => $request->fasilitas,
-            'foto_ruangan' => $nama_foto
-        ]);
+            $ruangan->update([
+                'nama_ruangan' => $request->nama_ruangan,
+                'kapasitas'    => $request->kapasitas,
+                'lokasi'       => $request->lokasi,
+                'keterangan'   => $request->keterangan,
+                'fasilitas'    => $request->fasilitas,
+                'foto_ruangan' => $nama_foto
+            ]);
+        });
 
         return redirect()->route('ruangan.index')->with('success', 'Data ruangan berhasil diperbarui!');
     }

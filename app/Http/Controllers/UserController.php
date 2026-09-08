@@ -54,15 +54,16 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri!');
         }
 
-        // Cegah demosi super_admin terakhir
-        if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
-            $superAdminCount = User::where('role', 'super_admin')->count();
-            if ($superAdminCount <= 1) {
-                return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+        return DB::transaction(function () use ($request, $user) {
+            // Cegah demosi super_admin terakhir dengan lockForUpdate
+            if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
+                $superAdminCount = User::where('role', 'super_admin')->lockForUpdate()->count();
+                if ($superAdminCount <= 1) {
+                    return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+                }
             }
-        }
 
-        $oldRole = $user->role;
+            $oldRole = $user->role;
 
         $data = [
             'name' => $request->name,
@@ -76,16 +77,17 @@ class UserController extends Controller
 
         $user->update($data);
 
-        if ($oldRole !== $request->role) {
-            Log::info('User role changed', [
-                'admin_id' => auth()->id(),
-                'user_id' => $user->id,
-                'old_role' => $oldRole,
-                'new_role' => $request->role,
-            ]);
-        }
+            if ($oldRole !== $request->role) {
+                Log::info('User role changed', [
+                    'admin_id' => auth()->id(),
+                    'user_id' => $user->id,
+                    'old_role' => $oldRole,
+                    'new_role' => $request->role,
+                ]);
+            }
 
-        return redirect()->back()->with('success', 'Data pengguna berhasil diperbarui!');
+            return redirect()->back()->with('success', 'Data pengguna berhasil diperbarui!');
+        });
     }
 
     public function updateRole(Request $request, User $user)
@@ -101,43 +103,55 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri!');
         }
 
-        // Cegah demosi super_admin terakhir
-        if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
-            $superAdminCount = User::where('role', 'super_admin')->count();
-            if ($superAdminCount <= 1) {
-                return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+        return DB::transaction(function () use ($request, $user) {
+            // Cegah demosi super_admin terakhir dengan lockForUpdate
+            if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
+                $superAdminCount = User::where('role', 'super_admin')->lockForUpdate()->count();
+                if ($superAdminCount <= 1) {
+                    return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+                }
             }
-        }
 
-        $oldRole = $user->role;
+            $oldRole = $user->role;
 
         $user->update([
             'role' => $request->role
         ]);
 
-        Log::info('User role changed', [
-            'admin_id' => auth()->id(),
-            'user_id' => $user->id,
-            'old_role' => $oldRole,
-            'new_role' => $request->role,
-        ]);
+            Log::info('User role changed', [
+                'admin_id' => auth()->id(),
+                'user_id' => $user->id,
+                'old_role' => $oldRole,
+                'new_role' => $request->role,
+            ]);
 
-        return redirect()->back()->with('success', 'Role pengguna berhasil diperbarui!');
+            return redirect()->back()->with('success', 'Role pengguna berhasil diperbarui!');
+        });
     }
 
     public function destroy(User $user)
     {
         $this->authorize('delete', $user);
 
-        Log::info('User deleted', [
-            'admin_id' => auth()->id(),
-            'deleted_user_id' => $user->id,
-            'deleted_user_role' => $user->role,
-            'deleted_user_email' => $user->email,
-        ]);
+        return DB::transaction(function () use ($user) {
+            // Cegah penghapusan super_admin terakhir
+            if ($user->role === 'super_admin') {
+                $superAdminCount = User::where('role', 'super_admin')->lockForUpdate()->count();
+                if ($superAdminCount <= 1) {
+                    return redirect()->back()->with('error', 'Tidak dapat menghapus pengguna. Ini adalah satu-satunya Super Admin!');
+                }
+            }
 
-        $user->delete();
+            Log::info('User deleted', [
+                'admin_id' => auth()->id(),
+                'deleted_user_id' => $user->id,
+                'deleted_user_role' => $user->role,
+                'deleted_user_email' => $user->email,
+            ]);
 
-        return redirect()->back()->with('success', 'Pengguna berhasil dihapus!');
+            $user->delete();
+
+            return redirect()->back()->with('success', 'Pengguna berhasil dihapus!');
+        });
     }
 }

@@ -18,6 +18,32 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->index('role');
         });
+
+        // 1. Ensure booking_ruangans.user_id is nullable for existing databases
+        Schema::table('booking_ruangans', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->nullable()->change();
+        });
+
+        // 2. Ensure peminjaman_barangs pivot has unique constraint
+        Schema::table('peminjaman_barangs', function (Blueprint $table) {
+            // Drop index if exists to avoid error, then add unique
+            try {
+                $table->dropUnique(['peminjaman_id', 'barang_id']);
+            } catch (\Exception $e) {
+                // Ignore if not exists
+            }
+            $table->unique(['peminjaman_id', 'barang_id']);
+        });
+
+        // 3. Ensure barcode is unique if missing
+        Schema::table('barangs', function (Blueprint $table) {
+            try {
+                $table->dropUnique(['barcode']);
+            } catch (\Exception $e) {
+                // Ignore if not exists
+            }
+            $table->unique('barcode');
+        });
     }
 
     /**
@@ -27,6 +53,14 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropIndex(['role']);
+        });
+
+        Schema::table('peminjaman_barangs', function (Blueprint $table) {
+            $table->dropUnique(['peminjaman_id', 'barang_id']);
+        });
+
+        Schema::table('barangs', function (Blueprint $table) {
+            $table->dropUnique(['barcode']);
         });
     }
 };

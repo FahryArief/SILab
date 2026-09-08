@@ -14,7 +14,16 @@ class StorePeminjamanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|exists:users,id',
+            'user_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::find($value);
+                    if ($user && $user->role !== 'peminjam') {
+                        $fail('Akun yang dipilih harus memiliki role peminjam.');
+                    }
+                },
+            ],
             'nama_peminjam' => 'required_without:user_id|nullable|string|max:255',
             'barang_ids' => 'required|array|min:1',
             'barang_ids.*' => 'exists:barangs,id|distinct',

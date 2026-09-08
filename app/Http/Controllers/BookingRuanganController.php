@@ -10,11 +10,17 @@ use App\Models\BookingRuangan;
 use App\Models\Ruangan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class BookingRuanganController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
+        $this->authorize('viewAny', BookingRuangan::class);
+
         // 1. Tentukan tanggal yang sedang dipilih (Default: Hari ini)
         $selectedDate = $request->date ?? date('Y-m-d');
 
@@ -137,6 +143,7 @@ class BookingRuanganController extends Controller
     public function markAsDone($id)
     {
         $booking = BookingRuangan::findOrFail($id);
+        $this->authorize('markAsDone', $booking);
 
         if ($booking->status !== 'disetujui') {
             return redirect()->back()->with('error', 'Hanya booking yang disetujui yang bisa ditandai selesai!');
@@ -146,12 +153,18 @@ class BookingRuanganController extends Controller
             'status' => 'selesai'
         ]);
 
+        Log::info('Booking Ruangan diselesaikan', [
+            'booking_id' => $booking->id,
+            'user_id' => auth()->id()
+        ]);
+
         return redirect()->back()->with('success', 'Status ruangan berhasil ditandai selesai!');
     }
 
     public function approve($id)
     {
         $booking = BookingRuangan::findOrFail($id);
+        $this->authorize('approve', $booking);
 
         if ($booking->status !== 'pending') {
             return redirect()->back()->with('error', 'Status sudah ' . $booking->status . ', tidak bisa disetujui lagi.');
@@ -172,6 +185,11 @@ class BookingRuanganController extends Controller
             }
 
             $booking->update(['status' => 'disetujui']);
+            
+            Log::info('Booking Ruangan disetujui', [
+                'booking_id' => $booking->id,
+                'admin_id' => auth()->id()
+            ]);
         });
 
         return redirect()->back()->with('success', 'Pengajuan ruangan berhasil disetujui!');
@@ -180,12 +198,19 @@ class BookingRuanganController extends Controller
     public function reject($id)
     {
         $booking = BookingRuangan::findOrFail($id);
+        $this->authorize('reject', $booking);
 
         if ($booking->status !== 'pending') {
             return redirect()->back()->with('error', 'Status sudah ' . $booking->status . ', tidak bisa ditolak.');
         }
 
         $booking->update(['status' => 'ditolak']);
+
+        Log::info('Booking Ruangan ditolak', [
+            'booking_id' => $booking->id,
+            'admin_id' => auth()->id()
+        ]);
+
         return redirect()->back()->with('success', 'Pengajuan ruangan telah ditolak.');
     }
 
@@ -195,16 +220,7 @@ class BookingRuanganController extends Controller
     public function downloadSurat($id)
     {
         $booking = BookingRuangan::findOrFail($id);
-
-        $user = auth()->user();
-
-        // Allow: owner, teknisi, kepala_lab, super_admin
-        $allowed = in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab'])
-                   || $user->id === $booking->user_id;
-
-        if (!$allowed) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses dokumen ini.');
-        }
+        $this->authorize('downloadSurat', $booking);
 
         if (!$booking->surat_peminjaman) {
             abort(404, 'Surat peminjaman tidak ditemukan.');

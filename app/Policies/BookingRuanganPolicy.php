@@ -8,6 +8,14 @@ use App\Models\User;
 class BookingRuanganPolicy
 {
     /**
+     * Determine if the user can view any booking.
+     */
+    public function viewAny(User $user): bool
+    {
+        return in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab', 'peminjam']);
+    }
+
+    /**
      * Determine if the user can view the booking.
      */
     public function view(User $user, BookingRuangan $booking): bool

@@ -8,6 +8,14 @@ use App\Models\User;
 class PeminjamanPolicy
 {
     /**
+     * Determine if the user can view any peminjaman.
+     */
+    public function viewAny(User $user): bool
+    {
+        return in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab', 'peminjam']);
+    }
+
+    /**
      * Determine if the user can view the peminjaman.
      */
     public function view(User $user, Peminjaman $peminjaman): bool

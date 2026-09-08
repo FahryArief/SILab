@@ -10,11 +10,17 @@ use App\Models\Peminjaman;
 use App\Models\Barang;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PeminjamanController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
+        $this->authorize('viewAny', Peminjaman::class);
+
         // Ambil semua data peminjaman terbaru beserta relasi barangs
         $peminjamans = Peminjaman::with(['user:id,name,email', 'barangs:id,nama_barang,barcode'])->latest()->paginate(20);
 
@@ -29,108 +35,121 @@ class PeminjamanController extends Controller
 
     public function store(StorePeminjamanRequest $request)
     {
+        return DB::transaction(function() use ($request) {
+            // Cek ketersediaan barang dengan lockForUpdate untuk mencegah race condition
+            $unavailableCount = Barang::whereIn('id', $request->barang_ids)
+                ->where('status_peminjaman', '!=', 'Tersedia')
+                ->lockForUpdate()
+                ->count();
 
-        // Cek ketersediaan barang
-        $unavailableCount = Barang::whereIn('id', $request->barang_ids)
-            ->where(function($q) {
-                $q->where('status_peminjaman', '!=', 'Tersedia')
-                  ->orWhere('kondisi', '!=', 'Baik');
-            })
-            ->count();
-
-        if ($unavailableCount > 0) {
-            return redirect()->back()->with('error', 'Beberapa barang sudah tidak tersedia atau dalam kondisi rusak!');
-        }
-
-        // Upload file INSIDE transaction with rollback safety
-        $nama_surat = null;
-
-        DB::transaction(function() use ($request, &$nama_surat) {
-            // Upload surat with hashed name to private disk
-            if ($request->hasFile('surat_peminjaman')) {
-                $file = $request->file('surat_peminjaman');
-                $nama_surat = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('surat_peminjaman', $nama_surat, 'local');
+            if ($unavailableCount > 0) {
+                return redirect()->back()->with('error', 'Satu atau lebih barang yang dipilih tidak tersedia untuk dipinjam.');
             }
 
-            // Simpan data peminjaman
+            // Upload surat with hashed name to private disk
+            $suratName = null;
+            if ($request->hasFile('surat_peminjaman')) {
+                $file = $request->file('surat_peminjaman');
+                $suratName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('surat_peminjaman', $suratName, 'local');
+            }
+
+            // Tentukan user_id, jika null berarti peminjaman manual/non-mahasiswa yang tidak punya akun
+            $user_id = $request->user_id;
+
+            // Simpan Peminjaman
             $peminjaman = Peminjaman::create([
-                'user_id' => $request->user_id,
+                'user_id' => $user_id,
                 'nama_peminjam' => $request->nama_peminjam,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
                 'tanggal_kembali' => $request->tanggal_kembali,
                 'keperluan' => $request->keperluan,
-                'surat_peminjaman' => $nama_surat,
-                'status' => 'disetujui'
+                'surat_peminjaman' => $suratName,
+                'status' => 'pending'
             ]);
 
-            // Attach barangs & update status
-            $peminjaman->barangs()->attach($request->barang_ids);
-            Barang::whereIn('id', $request->barang_ids)->update(['status_peminjaman' => 'Dipinjam']);
-        });
+            // Sync pivot table (otomatis handle unique insert)
+            $peminjaman->barangs()->sync($request->barang_ids);
 
-        return redirect()->route('peminjaman.index')->with('success', 'Peminjaman manual berhasil dicatat!');
+            // Karena sistem peminjaman multi-step (ACC dll), status barang tidak langsung diubah ke 'Dipinjam'
+            // sampai disetujui Kepala Lab. Atau jika logic berubah, ubah disini.
+
+            return redirect()->back()->with('success', 'Pengajuan peminjaman berhasil dibuat dan menunggu divalidasi Teknisi.');
+        });
     }
 
     // Validasi oleh Teknisi
     public function approve(Request $request, $id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
+        $this->authorize('approve', $peminjaman);
 
         if ($peminjaman->status !== 'pending') {
             return redirect()->back()->with('error', 'Aksi ini tidak dapat dilakukan. Status saat ini: ' . $peminjaman->status);
         }
 
-        $peminjaman->update([
-            'status' => 'divalidasi_teknisi',
-            'catatan_admin' => $request->catatan
+        $peminjaman->update(['status' => 'divalidasi_teknisi']);
+
+        Log::info('Peminjaman divalidasi oleh Teknisi', [
+            'peminjaman_id' => $peminjaman->id,
+            'teknisi_id' => auth()->id()
         ]);
 
-        return redirect()->back()->with('success', 'Peminjaman telah divalidasi oleh Teknisi. Menunggu ACC Kepala Lab.');
+        return redirect()->back()->with('success', 'Peminjaman berhasil divalidasi dan menunggu ACC Kepala Lab.');
     }
 
     // ACC Akhir oleh Kepala Lab
     public function accKepalaLab(Request $request, $id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
+        $this->authorize('accKepalaLab', $peminjaman);
 
         if ($peminjaman->status !== 'divalidasi_teknisi') {
             return redirect()->back()->with('error', 'Belum divalidasi oleh Teknisi.');
         }
 
-        $peminjaman->update([
-            'status' => 'disetujui',
-            'catatan_admin' => $request->catatan
+        $peminjaman->update(['status' => 'disetujui']);
+
+        // Update status barang menjadi 'Dipinjam'
+        Barang::whereIn('id', $peminjaman->barangs->pluck('id'))->update(['status_peminjaman' => 'Dipinjam']);
+
+        Log::info('Peminjaman di-ACC oleh Kepala Lab', [
+            'peminjaman_id' => $peminjaman->id,
+            'kepala_lab_id' => auth()->id()
         ]);
 
-        return redirect()->back()->with('success', 'Peminjaman telah disetujui (ACC) oleh Kepala Lab.');
+        return redirect()->back()->with('success', 'Peminjaman berhasil disetujui (ACC Kepala Lab).');
     }
 
     public function reject(Request $request, $id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
+        $this->authorize('reject', $peminjaman);
 
         if (!in_array($peminjaman->status, ['pending', 'divalidasi_teknisi'])) {
             return redirect()->back()->with('error', 'Aksi ini tidak dapat dilakukan. Status saat ini: ' . $peminjaman->status);
         }
 
         DB::transaction(function() use ($peminjaman, $request) {
-            $peminjaman->update([
-                'status' => 'ditolak',
-                'catatan_admin' => $request->catatan
-            ]);
+            $peminjaman->update(['status' => 'ditolak']);
 
             // Kembalikan barang menjadi Tersedia
             $barangIds = $peminjaman->barangs()->pluck('barangs.id');
             Barang::whereIn('id', $barangIds)->update(['status_peminjaman' => 'Tersedia']);
         });
 
-        return redirect()->back()->with('success', 'Peminjaman telah ditolak.');
+        Log::info('Peminjaman ditolak', [
+            'peminjaman_id' => $peminjaman->id,
+            'user_id' => auth()->id()
+        ]);
+
+        return redirect()->back()->with('success', 'Peminjaman berhasil ditolak.');
     }
 
     public function kembalikan($id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
+        $this->authorize('kembalikan', $peminjaman);
 
         // Only allow return from 'disetujui' status
         if ($peminjaman->status !== 'disetujui') {
@@ -140,12 +159,16 @@ class PeminjamanController extends Controller
         DB::transaction(function() use ($peminjaman) {
             $peminjaman->update(['status' => 'dikembalikan']);
 
-            // Kembalikan fisik barang menjadi tersedia
-            $barangIds = $peminjaman->barangs()->pluck('barangs.id');
-            Barang::whereIn('id', $barangIds)->update(['status_peminjaman' => 'Tersedia']);
+            // Update status barang kembali ke 'Tersedia'
+            Barang::whereIn('id', $peminjaman->barangs->pluck('id'))->update(['status_peminjaman' => 'Tersedia']);
         });
 
-        return redirect()->back()->with('success', 'Barang fisik berhasil dikembalikan ke lab!');
+        Log::info('Peminjaman dikembalikan', [
+            'peminjaman_id' => $peminjaman->id,
+            'user_id' => auth()->id()
+        ]);
+
+        return redirect()->back()->with('success', 'Barang berhasil dikembalikan.');
     }
 
     /**
@@ -154,16 +177,7 @@ class PeminjamanController extends Controller
     public function downloadSurat($id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
-
-        $user = auth()->user();
-
-        // Allow: owner, teknisi, kepala_lab, super_admin
-        $allowed = in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab'])
-                   || $user->id === $peminjaman->user_id;
-
-        if (!$allowed) {
-            abort(403, 'Anda tidak memiliki izin untuk mengakses dokumen ini.');
-        }
+        $this->authorize('downloadSurat', $peminjaman);
 
         if (!$peminjaman->surat_peminjaman) {
             abort(404, 'Surat peminjaman tidak ditemukan.');

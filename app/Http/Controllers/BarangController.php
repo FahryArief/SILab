@@ -10,6 +10,7 @@ use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Ruangan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Exports\BarangExport;
 use App\Imports\BarangImport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -38,45 +39,40 @@ class BarangController extends Controller
     // 2. Menyimpan Data ke Database (Multi Item)
     public function store(StoreBarangRequest $request)
     {
+        DB::transaction(function() use ($request) {
+            $default_foto = null;
+            if ($request->hasFile('foto_barang')) {
+                $foto = $request->file('foto_barang');
+                $default_foto = Str::uuid() . '.' . $foto->getClientOriginalExtension();
+                $foto->storeAs('foto_barang', $default_foto, 'public');
+            }
 
-        $default_foto = null;
-        if ($request->hasFile('foto_barang')) {
-            $foto = $request->file('foto_barang');
-            $default_foto = time() . '_default_' . $foto->getClientOriginalName();
-            $foto->storeAs('foto_barang', $default_foto, 'public');
-        }
-
-        DB::transaction(function() use ($request, $default_foto) {
-            foreach ($request->items as $index => $item) {
-                
-                // Cek apakah item punya ruangan custom, jika tidak pakai ruangan default
-                $ruangan_id = !empty($item['ruangan_id']) ? $item['ruangan_id'] : $request->ruangan_id;
-                
-                // Cek apakah item punya foto custom, jika tidak pakai foto default
+            foreach ($request->items as $item) {
+                // Gunakan foto default jika item tidak punya foto khusus
                 $foto_item = $default_foto;
-                if (isset($item['foto']) && $request->hasFile("items.{$index}.foto")) {
-                    $f = $request->file("items.{$index}.foto");
-                    $foto_item = time() . "_item_{$index}_" . $f->getClientOriginalName();
-                    $f->storeAs('foto_barang', $foto_item, 'public');
+
+                if (isset($item['foto']) && $request->hasFile("items.{$item['kode_inventaris']}.foto")) {
+                    $fotoFile = $request->file("items.{$item['kode_inventaris']}.foto");
+                    $foto_item = Str::uuid() . '.' . $fotoFile->getClientOriginalExtension();
+                    $fotoFile->storeAs('foto_barang', $foto_item, 'public');
                 }
 
                 Barang::create([
                     'nama_barang' => $request->nama_barang,
                     'kategori_id' => $request->kategori_id,
-                    'ruangan_id' => $ruangan_id,
-                    'merk' => $item['merk'] ?? null,
-                    'deskripsi' => $request->deskripsi,
-                    'barcode' => $item['kode_inventaris'],
+                    'ruangan_id'  => $item['ruangan_id'] ?? $request->ruangan_id,
+                    'barcode'     => $item['kode_inventaris'],
                     'foto_barang' => $foto_item,
+                    'kondisi'     => $item['kondisi'],
                     'kepemilikan' => $item['kepemilikan'],
-                    'kondisi' => $item['kondisi'],
-                    'harga' => $item['harga'] ?? null,
-                    'status_peminjaman' => 'Tersedia'
+                    'status_peminjaman' => 'Tersedia', // Default
+                    'merk'        => $item['merk'] ?? null,
+                    'harga'       => $item['harga'] ?? null,
                 ]);
             }
         });
 
-        return redirect()->route('barang.index')->with('success', count($request->items) . ' Barang fisik unik berhasil ditambahkan!');
+        return redirect()->back()->with('success', 'Data Barang berhasil ditambahkan!');
     }
 
     // 3. Menampilkan Form Edit Barang
@@ -93,32 +89,36 @@ class BarangController extends Controller
     {
         $barang = Barang::findOrFail($id);
 
-        $nama_foto = $barang->foto_barang;
+        DB::transaction(function() use ($request, $barang) {
+            $nama_foto = $barang->foto_barang;
 
-        if ($request->hasFile('foto_barang')) {
-            if ($nama_foto && Storage::disk('public')->exists('foto_barang/' . $nama_foto)) {
-                Storage::disk('public')->delete('foto_barang/' . $nama_foto);
+            if ($request->hasFile('foto_barang')) {
+                // Hapus foto lama jika bukan null/bawaan seeder (kalau mau aman periksa exists)
+                if ($nama_foto && Storage::disk('public')->exists('foto_barang/' . $nama_foto)) {
+                    Storage::disk('public')->delete('foto_barang/' . $nama_foto);
+                }
+
+                $foto = $request->file('foto_barang');
+                $nama_foto = Str::uuid() . '.' . $foto->getClientOriginalExtension();
+                $foto->storeAs('foto_barang', $nama_foto, 'public');
             }
-            $foto = $request->file('foto_barang');
-            $nama_foto = time() . '_' . $foto->getClientOriginalName();
-            $foto->storeAs('foto_barang', $nama_foto, 'public');
-        }
 
-        $barang->update([
-            'nama_barang' => $request->nama_barang,
-            'kategori_id' => $request->kategori_id,
-            'ruangan_id' => $request->ruangan_id,
-            'barcode' => $request->barcode,
-            'merk' => $request->merk,
-            'deskripsi' => $request->deskripsi,
-            'foto_barang' => $nama_foto,
-            'kondisi' => $request->kondisi,
-            'kepemilikan' => $request->kepemilikan,
-            'harga' => $request->harga,
-            'status_peminjaman' => $request->status_peminjaman,
-        ]);
+            $barang->update([
+                'nama_barang' => $request->nama_barang,
+                'kategori_id' => $request->kategori_id,
+                'ruangan_id' => $request->ruangan_id,
+                'barcode' => $request->barcode,
+                'merk' => $request->merk,
+                'deskripsi' => $request->deskripsi,
+                'foto_barang' => $nama_foto,
+                'kondisi' => $request->kondisi,
+                'kepemilikan' => $request->kepemilikan,
+                'harga' => $request->harga,
+                'status_peminjaman' => $request->status_peminjaman,
+            ]);
+        });
 
-        return redirect()->route('barang.index')->with('success', 'Data barang fisik berhasil diperbarui!');
+        return redirect()->route('barang.index')->with('success', 'Data barang berhasil diperbarui!');
     }
 
     /**
