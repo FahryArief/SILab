@@ -168,9 +168,9 @@
             @foreach($chunk as $barang)
             <div class="label-box lbl-standar" data-barcode="{{ $barang->barcode }}" data-nama="{{ $barang->nama_barang }}">
                 <div class="label-header">
-                    <img src="{{ asset('images/trpl.png') }}" alt="Logo TRPL">
+                    <img src="{{ asset('images/polinela.png') }}" alt="Logo POLINELA">
                     <div class="lab-title">Inventaris TRPL</div>
-                    <div class="polinela-mark">POLINELA</div>
+                    <img src="{{ asset('images/trpl.png') }}" alt="Logo TRPL">
                 </div>
                 <div class="nama-barang">{{ $barang->nama_barang }}</div>
                 <div class="qr-img">

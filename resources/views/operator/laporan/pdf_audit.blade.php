@@ -38,9 +38,9 @@
 
     <div class="kop-surat">
         <table class="kop-brand"><tr>
-            <td class="brand-left"><img src="{{ public_path('images/trpl.png') }}" alt="Logo TRPL"></td>
+            <td class="brand-right"><img src="{{ public_path('images/polinela.png') }}" alt="Logo POLINELA"></td>
             <td></td>
-            <td class="brand-right"><span class="polinela-logo">POLINELA</span></td>
+            <td class="brand-left"><img src="{{ public_path('images/trpl.png') }}" alt="Logo TRPL"></td>
         </tr></table>
         <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
         <h1>POLITEKNIK NEGERI LAMPUNG</h1>

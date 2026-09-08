@@ -8,27 +8,31 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('peminjamans', 'dikembalikan_at')) {
-            Schema::table('peminjamans', function (Blueprint $table) {
-                $table->timestamp('dikembalikan_at')->nullable()->after('tanggal_kembali');
-            });
-        }
+        $columns = \Illuminate\Support\Facades\DB::select('SHOW COLUMNS FROM peminjamans');
+        $existingColumns = array_column($columns, 'Field');
 
-        if (!Schema::hasColumn('peminjamans', 'hari_terlambat')) {
-            Schema::table('peminjamans', function (Blueprint $table) {
+        Schema::table('peminjamans', function (Blueprint $table) use ($existingColumns) {
+            if (!in_array('dikembalikan_at', $existingColumns)) {
+                $table->timestamp('dikembalikan_at')->nullable()->after('tanggal_kembali');
+            }
+            if (!in_array('hari_terlambat', $existingColumns)) {
                 $table->unsignedInteger('hari_terlambat')->default(0)->after('dikembalikan_at');
-            });
-        }
+            }
+        });
     }
 
     public function down(): void
     {
-        foreach (['dikembalikan_at', 'hari_terlambat'] as $column) {
-            if (Schema::hasColumn('peminjamans', $column)) {
-                Schema::table('peminjamans', function (Blueprint $table) use ($column) {
-                    $table->dropColumn($column);
-                });
+        $columns = \Illuminate\Support\Facades\DB::select('SHOW COLUMNS FROM peminjamans');
+        $existingColumns = array_column($columns, 'Field');
+
+        Schema::table('peminjamans', function (Blueprint $table) use ($existingColumns) {
+            if (in_array('dikembalikan_at', $existingColumns)) {
+                $table->dropColumn('dikembalikan_at');
             }
-        }
+            if (in_array('hari_terlambat', $existingColumns)) {
+                $table->dropColumn('hari_terlambat');
+            }
+        });
     }
 };
