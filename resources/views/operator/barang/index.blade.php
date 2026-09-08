@@ -9,6 +9,7 @@
         filterRuangan: '',
         filterStatus: '',
         selectedIds: [],
+        importExportOpen: false,
         toggleSelect(id) {
             const i = this.selectedIds.indexOf(id);
             if (i === -1) this.selectedIds.push(id);
@@ -43,11 +44,11 @@
         @endif
 
         {{-- Toolbar --}}
-        <div class="grid grid-cols-1 lg:grid-cols-[minmax(220px,1fr)_auto] items-center mb-4 gap-3">
-            <div class="flex w-full min-w-0">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
+            <div class="flex flex-1 w-full min-w-0 max-w-lg">
                 <input type="text" x-model="search" placeholder="Cari barang..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
-            <div class="flex gap-2 w-full lg:w-auto flex-wrap items-center">
+            <div class="flex gap-2 w-full md:w-auto flex-wrap items-center">
                 <select x-model="filterRuangan" class="border-gray-300 rounded-md shadow-sm text-sm">
                     <option value="">Semua Ruangan</option>
                     @foreach($ruangans as $ruang)
@@ -65,12 +66,28 @@
                     <option value="Tersedia">Tersedia</option>
                     <option value="Dipinjam">Dipinjam</option>
                 </select>
-                <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-bold flex items-center transition">
-                    Import Excel
-                </button>
-                <a href="{{ route('barang.export') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-bold flex items-center transition">
-                    Export / Template
-                </a>
+                <div class="relative" @click.outside="importExportOpen = false">
+                    <button type="button" @click="importExportOpen = !importExportOpen"
+                        class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition"
+                        :aria-expanded="importExportOpen">
+                        Import / Export
+                        <svg class="w-4 h-4 transition-transform" :class="importExportOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="importExportOpen" x-transition
+                        class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1"
+                        style="display: none;">
+                        <button type="button" @click="importExportOpen = false; document.getElementById('importModal').classList.remove('hidden')"
+                            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                            Import Excel
+                        </button>
+                        <a href="{{ route('barang.export') }}"
+                            class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                            Export / Template
+                        </a>
+                    </div>
+                </div>
                 <a href="{{ route('barang.create') }}" class="bg-[#1e293b] hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-bold flex items-center whitespace-nowrap transition">
                     <span class="mr-1.5">+</span> Tambah Barang
                 </a>
