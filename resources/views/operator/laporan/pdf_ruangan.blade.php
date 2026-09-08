@@ -8,9 +8,10 @@
         .kop-surat { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         .kop-brand { width: 100%; border-collapse: collapse; margin: 0 0 6px 0; }
         .kop-brand td { border: none; padding: 0; vertical-align: middle; }
-        .kop-brand .brand-left, .kop-brand .brand-right { width: 18%; }
+        .kop-brand .brand-left, .kop-brand .brand-right { width: 15%; }
         .kop-brand .brand-left { text-align: left; }
         .kop-brand .brand-right { text-align: right; }
+        .kop-brand .brand-copy { width: 70%; text-align: center; }
         .kop-brand img { width: 52px; height: 52px; object-fit: contain; }
         .polinela-logo { color: #123b78; font-size: 12px; font-weight: bold; line-height: 1; }
         .kop-surat h1 { margin: 0; font-size: 18px; text-transform: uppercase; font-weight: bold; }
@@ -37,14 +38,15 @@
 
     <div class="kop-surat">
         <table class="kop-brand"><tr>
-               <td class="brand-right"><img src="{{ public_path('images/polinela.png') }}" alt="Logo POLINELA"></td>
-            <td></td>
-            <td class="brand-left"><img src="{{ public_path('images/trpl.png') }}" alt="Logo TRPL"></td>
-            </tr></table>
-        <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-        <h1>POLITEKNIK NEGERI LAMPUNG</h1>
-        <h2>PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK</h2>
-        <p>Jl. Soekarno Hatta No.10, Rajabasa, Kec. Rajabasa, Kota Bandar Lampung, Lampung 31414</p>
+            <td class="brand-left"><span class="polinela-logo">POLINELA</span></td>
+            <td class="brand-copy">
+                <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
+                <h1>POLITEKNIK NEGERI LAMPUNG</h1>
+                <h2>PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK</h2>
+                <p>Jl. Soekarno Hatta No.10, Rajabasa, Kec. Rajabasa, Kota Bandar Lampung, Lampung 31414</p>
+            </td>
+            <td class="brand-right"><img src="{{ public_path('images/trpl.png') }}" alt="Logo TRPL"></td>
+        </tr></table>
     </div>
 
     <div class="judul">
