@@ -5,6 +5,31 @@
 
     <div class="max-w-7xl mx-auto space-y-6">
 
+        @if($total_pending > 0 || $peminjaman_terlambat > 0)
+            <div class="space-y-3">
+                @if($total_pending > 0)
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                        <span class="text-xl">🔔</span>
+                        <div class="text-sm text-amber-900">
+                            <p class="font-bold">{{ $total_pending }} pengajuan membutuhkan tindakan.</p>
+                            <p class="mt-1">{{ $peminjaman_pending }} peminjaman dan {{ $booking_pending }} booking ruangan masih menunggu proses.</p>
+                            <a href="{{ route('peminjaman.index') }}" class="inline-block mt-2 font-bold underline">Buka daftar peminjaman</a>
+                        </div>
+                    </div>
+                @endif
+                @if($peminjaman_terlambat > 0)
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                        <span class="text-xl">⚠️</span>
+                        <div class="text-sm text-red-900">
+                            <p class="font-bold">{{ $peminjaman_terlambat }} peminjaman telah melewati tenggat.</p>
+                            <p class="mt-1">Segera tindak lanjuti pengembalian barang.</p>
+                            <a href="{{ route('peminjaman.index') }}" class="inline-block mt-2 font-bold underline">Lihat peminjaman</a>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm flex justify-between items-center">
             <div>
                 <h2 class="text-xl font-bold text-gray-800">Selamat datang, {{ auth()->user()->name }}! 👋</h2>

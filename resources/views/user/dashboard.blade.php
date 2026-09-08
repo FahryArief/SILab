@@ -22,6 +22,26 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @if($peminjaman_terlambat > 0 || $peminjaman_menunggu > 0 || $booking_menunggu > 0 || $peminjaman_ditolak->isNotEmpty())
+                @if($peminjaman_menunggu > 0 || $booking_menunggu > 0)
+                    <div class="md:col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" role="status">
+                        <span class="text-xl">🔔</span>
+                        <div class="text-sm text-amber-900">
+                            <p class="font-bold">Ada pengajuan yang masih diproses.</p>
+                            <p class="mt-1">{{ $peminjaman_menunggu }} peminjaman dan {{ $booking_menunggu }} booking ruangan menunggu tindak lanjut.</p>
+                        </div>
+                    </div>
+                @endif
+                @if($peminjaman_ditolak->isNotEmpty())
+                    <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                        <span class="text-xl">❗</span>
+                        <div class="text-sm text-red-900">
+                            <p class="font-bold">Ada {{ $peminjaman_ditolak->count() }} pengajuan peminjaman yang ditolak.</p>
+                            <a href="{{ route('peminjam.riwayat') }}" class="inline-block mt-2 font-bold underline">Lihat detail riwayat</a>
+                        </div>
+                    </div>
+                @endif
+            @endif
             @if($peminjaman_terlambat > 0)
                 <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
                     <svg class="w-5 h-5 text-red-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86l-7.82 14A2 2 0 004.21 21h15.58a2 2 0 001.74-3.14l-7.82-14a2 2 0 00-3.42 0z"/></svg>

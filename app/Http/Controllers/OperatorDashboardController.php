@@ -20,6 +20,9 @@ class OperatorDashboardController extends Controller
         $booking_pending = BookingRuangan::where('status', 'pending')->count();
         $peminjaman_pending = Peminjaman::where('status', 'pending')->count();
         $total_pending = $booking_pending + $peminjaman_pending;
+        $peminjaman_terlambat = Peminjaman::where('status', 'disetujui')
+            ->whereDate('tanggal_kembali', '<', now()->toDateString())
+            ->count();
 
         // 3. Ambil Aktivitas/Pengajuan Terbaru (Masing-masing 3 terbaru)
         $recent_bookings = BookingRuangan::with([
@@ -32,6 +35,7 @@ class OperatorDashboardController extends Controller
         return view('operator.dashboard', compact(
             'total_barang', 'total_ruangan',
             'booking_pending', 'peminjaman_pending', 'total_pending',
+            'peminjaman_terlambat',
             'recent_bookings', 'recent_peminjamans'
         ));
     }

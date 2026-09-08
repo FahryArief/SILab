@@ -31,11 +31,23 @@ class UserDashboardController extends Controller
             ->where('status', 'disetujui')
             ->whereDate('tanggal_kembali', '<', now()->toDateString())
             ->count();
+        $peminjaman_menunggu = Peminjaman::where('user_id', $user_id)
+            ->whereIn('status', ['pending', 'divalidasi_teknisi'])
+            ->count();
+        $peminjaman_ditolak = Peminjaman::where('user_id', $user_id)
+            ->where('status', 'ditolak')
+            ->latest()
+            ->take(3)
+            ->get();
+        $booking_menunggu = BookingRuangan::where('user_id', $user_id)
+            ->where('status', 'pending')
+            ->count();
         $tanggungan_ruang = BookingRuangan::where('user_id', $user_id)->where('status', 'disetujui')->count();
 
         return view('user.dashboard', compact(
             'my_bookings', 'my_peminjamans', 'tanggungan_barang',
-            'peminjaman_terlambat', 'tanggungan_ruang'
+            'peminjaman_terlambat', 'peminjaman_menunggu',
+            'peminjaman_ditolak', 'booking_menunggu', 'tanggungan_ruang'
         ));
     }
 
