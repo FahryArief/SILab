@@ -131,7 +131,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Password</label>
-                            <input type="password" name="password" class="w-full border-gray-300 rounded-md mt-1 text-sm" placeholder="Min. 6 karakter" required minlength="6">
+                            <input type="password" name="password" class="w-full border-gray-300 rounded-md mt-1 text-sm" placeholder="Min. 8 karakter" required minlength="8">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Role / Jabatan</label>
@@ -172,7 +172,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Password Baru <span class="text-gray-400 normal-case">(kosongkan jika tidak diubah)</span></label>
-                            <input type="password" name="password" class="w-full border-gray-300 rounded-md mt-1 text-sm" placeholder="Min. 6 karakter" minlength="6">
+                            <input type="password" name="password" class="w-full border-gray-300 rounded-md mt-1 text-sm" placeholder="Min. 8 karakter" minlength="8">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Role / Jabatan</label>
