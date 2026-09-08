@@ -10,8 +10,12 @@
                     <input type="text" name="nama_ruangan" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required placeholder="Contoh: Lab Komputer 1">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Keterangan / Lokasi</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Keterangan</label>
                     <input type="text" name="keterangan" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Gedung B Lt. 3">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Lokasi (Gedung/Lantai)</label>
+                    <input type="text" name="lokasi" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Gedung B Lantai 3">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Kapasitas Orang</label>
