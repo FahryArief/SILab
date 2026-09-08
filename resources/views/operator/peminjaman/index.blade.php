@@ -42,6 +42,21 @@
             </div>
         </div>
 
+        <form method="GET" action="{{ route('peminjaman.index') }}" class="mb-4 flex flex-col sm:flex-row gap-2">
+            <label for="peminjaman-search" class="sr-only">Cari peminjaman</label>
+            <input id="peminjaman-search" type="search" name="search" value="{{ $search }}"
+                placeholder="Cari nama peminjam, email, barang, barcode, atau keperluan..."
+                class="flex-1 min-w-0 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-bold">
+                Cari
+            </button>
+            @if($search !== '')
+                <a href="{{ route('peminjaman.index') }}" class="px-4 py-2 rounded-md text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 text-center">
+                    Reset
+                </a>
+            @endif
+        </form>
+
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
