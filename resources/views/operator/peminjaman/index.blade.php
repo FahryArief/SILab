@@ -113,7 +113,11 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($pinjam->terlambat)
+                                @if($pinjam->dikembalikan_terlambat)
+                                    <span class="px-2 py-1 rounded text-[9px] font-bold uppercase bg-orange-100 text-orange-700 border border-orange-200">
+                                        Dikembalikan terlambat {{ $pinjam->hari_terlambat }} hari
+                                    </span>
+                                @elseif($pinjam->terlambat)
                                     <span class="px-2 py-1 rounded text-[9px] font-bold uppercase bg-red-100 text-red-700 border border-red-200">
                                         Terlambat {{ $pinjam->hari_terlambat }} hari
                                     </span>
@@ -135,7 +139,7 @@
                                     </span>
                                 @elseif($pinjam->status == 'dikembalikan')
                                     <span class="px-2 py-1 rounded text-[9px] font-bold uppercase bg-gray-100 text-gray-500 border border-gray-200">
-                                        Dikembalikan
+                                        Dikembalikan tepat waktu
                                     </span>
                                 @endif
 

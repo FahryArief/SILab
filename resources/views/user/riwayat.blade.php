@@ -34,7 +34,9 @@
                                 {{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($pinjam->tanggal_kembali)->format('d M Y') }}
                             </td>
                             <td class="px-6 py-4">
-                                @if($pinjam->terlambat)
+                                @if($pinjam->dikembalikan_terlambat)
+                                    <span class="px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold rounded uppercase border border-orange-200">Dikembalikan terlambat {{ $pinjam->hari_terlambat }} hari</span>
+                                @elseif($pinjam->terlambat)
                                     <span class="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase border border-red-200">Terlambat {{ $pinjam->hari_terlambat }} hari</span>
                                     <p class="text-[10px] text-red-600 mt-1">Segera kembalikan barang.</p>
                                 @elseif($pinjam->status == 'pending')

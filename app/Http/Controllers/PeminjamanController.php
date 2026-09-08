@@ -191,6 +191,14 @@ class PeminjamanController extends Controller
 
         DB::transaction(function() use ($peminjaman) {
             $locked = Peminjaman::whereKey($peminjaman->id)->lockForUpdate()->firstOrFail();
+            $hariTerlambat = today()->gt($locked->tanggal_kembali)
+                ? $locked->tanggal_kembali->diffInDays(today())
+                : 0;
+
+            $locked->update([
+                'dikembalikan_at' => now(),
+                'hari_terlambat' => $hariTerlambat,
+            ]);
             app(PeminjamanStatusService::class)->transition($locked, 'dikembalikan');
 
             // Update status barang kembali ke 'Tersedia'

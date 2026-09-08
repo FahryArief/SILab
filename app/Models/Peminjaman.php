@@ -18,6 +18,8 @@ class Peminjaman extends Model
         'surat_peminjaman',
         'status',
         'catatan_admin',
+        'dikembalikan_at',
+        'hari_terlambat',
     ];
 
     protected function casts(): array
@@ -25,6 +27,8 @@ class Peminjaman extends Model
         return [
             'tanggal_pinjam' => 'date',
             'tanggal_kembali' => 'date',
+            'dikembalikan_at' => 'datetime',
+            'hari_terlambat' => 'integer',
         ];
     }
 
@@ -51,10 +55,19 @@ class Peminjaman extends Model
 
     public function getHariTerlambatAttribute(): int
     {
+        if ($this->status === 'dikembalikan') {
+            return (int) $this->attributes['hari_terlambat'];
+        }
+
         if (!$this->terlambat) {
             return 0;
         }
 
         return $this->tanggal_kembali->diffInDays(today());
+    }
+
+    public function getDikembalikanTerlambatAttribute(): bool
+    {
+        return $this->status === 'dikembalikan' && $this->hari_terlambat > 0;
     }
 }
