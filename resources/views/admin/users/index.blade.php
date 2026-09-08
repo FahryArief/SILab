@@ -108,6 +108,9 @@
                         </table>
                     </div>
                 </div>
+                <div class="px-6 pb-6">
+                    {{ $users->links() }}
+                </div>
             </div>
         </div>
     </div>

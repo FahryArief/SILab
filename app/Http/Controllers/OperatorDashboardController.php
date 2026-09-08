@@ -22,8 +22,12 @@ class OperatorDashboardController extends Controller
         $total_pending = $booking_pending + $peminjaman_pending;
 
         // 3. Ambil Aktivitas/Pengajuan Terbaru (Masing-masing 3 terbaru)
-        $recent_bookings = BookingRuangan::with(['user', 'ruangan'])->latest()->take(3)->get();
-        $recent_peminjamans = Peminjaman::with(['user', 'barangs'])->latest()->take(3)->get();
+        $recent_bookings = BookingRuangan::with([
+            'user:id,name', 'ruangan:id,nama_ruangan',
+        ])->latest()->take(3)->get();
+        $recent_peminjamans = Peminjaman::with([
+            'user:id,name', 'barangs:id,nama_barang,barcode',
+        ])->latest()->take(3)->get();
 
         return view('operator.dashboard', compact(
             'total_barang', 'total_ruangan',

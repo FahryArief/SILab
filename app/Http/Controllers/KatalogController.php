@@ -17,7 +17,9 @@ class KatalogController extends Controller
     public function barang()
     {
         // Ambil semua barang yang tersedia, mungkin dikelompokkan di view
-        $barangs = Barang::where('status_peminjaman', 'Tersedia')->latest()->get();
+        $barangs = Barang::with(['kategori:id,nama_kategori'])
+            ->where('status_peminjaman', 'Tersedia')
+            ->latest()->paginate(24)->withQueryString();
         return view('user.katalog.barang', compact('barangs'));
     }
 
@@ -78,7 +80,10 @@ class KatalogController extends Controller
     // 3. Menampilkan Katalog Ruangan
     public function ruangan()
     {
-        $ruangans = Ruangan::all();
+        $ruangans = Ruangan::select([
+            'id', 'nama_ruangan', 'kode_ruangan', 'kapasitas', 'lokasi',
+            'keterangan', 'fasilitas', 'foto_ruangan',
+        ])->latest()->paginate(18)->withQueryString();
         return view('user.katalog.ruangan', compact('ruangans'));
     }
 

@@ -123,6 +123,9 @@
             @endforeach
         </div>
     </div>
+    <div class="mt-6">
+        {{ $ruangans->links() }}
+    </div>
 
     <!-- Modal Import -->
     <div id="importModalRuangan" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
