@@ -38,7 +38,6 @@ return new class extends Migration
             // Modify user_id to be nullable (SQLite might struggle with changing FK to nullable, but let's assume it works or is handled)
             // Actually, to be safe on existing MySQL/SQLite, we just add the new columns. We already changed user_id to nullable earlier in a separate migration if needed.
             // Wait, we can use change() for user_id.
-            $table->string('nama_peminjam')->nullable()->after('user_id');
             $table->string('surat_peminjaman')->nullable()->after('keperluan');
             
             // Note: modifying Enums in SQLite using change() often fails.
