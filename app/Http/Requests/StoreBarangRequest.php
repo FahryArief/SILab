@@ -18,6 +18,7 @@ class StoreBarangRequest extends FormRequest
             'kategori_id' => 'required|exists:kategoris,id',
             'ruangan_id' => 'required|exists:ruangans,id',
             'singkatan' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
             'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'items' => 'required|array|min:1',
             'items.*.kode_inventaris' => 'required|string|unique:barangs,barcode',
