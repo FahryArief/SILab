@@ -25,7 +25,7 @@
     <aside :class="[
         isCollapsed ? 'md:w-20' : 'md:w-64',
         mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-    ]" class="fixed inset-y-0 left-0 w-72 bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-50 transition-all duration-300 ease-in-out shrink-0 relative md:relative">
+    ]" class="fixed inset-y-0 left-0 w-72 bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-50 transition-all duration-300 ease-in-out">
 
         <div class="h-16 flex items-center justify-center bg-[#0f172a] text-white font-bold text-xl tracking-wider border-b border-slate-800 overflow-hidden shrink-0">
             <svg class="w-6 h-6 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -193,7 +193,7 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+    <div :class="isCollapsed ? 'md:ml-20' : 'md:ml-64'" class="flex-1 min-w-0 flex flex-col overflow-hidden bg-gray-50 transition-[margin] duration-300 ease-in-out">
 
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-30 shadow-sm shrink-0">
 
