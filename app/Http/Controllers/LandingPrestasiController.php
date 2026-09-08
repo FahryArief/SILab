@@ -20,10 +20,16 @@ class LandingPrestasiController extends Controller
             'deskripsi' => 'required|string',
             'tahun' => 'required|digits:4',
             'ikon' => 'nullable|string',
-            'medali' => 'required|in:gold,silver,bronze,champion',
+            'medali' => 'required|string|max:50',
+            'medali_custom' => 'nullable|string|max:50',
         ]);
 
-        LandingPrestasi::create($request->all());
+        $data = $request->all();
+        if ($data['medali'] === 'lainnya') {
+            $data['medali'] = $request->medali_custom;
+        }
+
+        LandingPrestasi::create($data);
         return back()->with('success', 'Prestasi berhasil ditambahkan.');
     }
 
@@ -34,10 +40,16 @@ class LandingPrestasiController extends Controller
             'deskripsi' => 'required|string',
             'tahun' => 'required|digits:4',
             'ikon' => 'nullable|string',
-            'medali' => 'required|in:gold,silver,bronze,champion',
+            'medali' => 'required|string|max:50',
+            'medali_custom' => 'nullable|string|max:50',
         ]);
 
-        LandingPrestasi::findOrFail($id)->update($request->all());
+        $data = $request->all();
+        if ($data['medali'] === 'lainnya') {
+            $data['medali'] = $request->medali_custom;
+        }
+
+        LandingPrestasi::findOrFail($id)->update($data);
         return back()->with('success', 'Prestasi berhasil diperbarui.');
     }
 
