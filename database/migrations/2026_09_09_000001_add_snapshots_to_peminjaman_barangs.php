@@ -8,23 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('peminjaman_barangs', 'nama_barang_snapshot')) {
-            Schema::table('peminjaman_barangs', function (Blueprint $table) {
+        $columns = \Illuminate\Support\Facades\DB::select('SHOW COLUMNS FROM peminjaman_barangs');
+        $existingColumns = array_column($columns, 'Field');
+
+        Schema::table('peminjaman_barangs', function (Blueprint $table) use ($existingColumns) {
+            if (!in_array('nama_barang_snapshot', $existingColumns)) {
                 $table->string('nama_barang_snapshot')->nullable()->after('barang_id');
-            });
-        }
-
-        if (!Schema::hasColumn('peminjaman_barangs', 'barcode_snapshot')) {
-            Schema::table('peminjaman_barangs', function (Blueprint $table) {
+            }
+            if (!in_array('barcode_snapshot', $existingColumns)) {
                 $table->string('barcode_snapshot')->nullable()->after('nama_barang_snapshot');
-            });
-        }
-
-        if (!Schema::hasColumn('peminjaman_barangs', 'kondisi_snapshot')) {
-            Schema::table('peminjaman_barangs', function (Blueprint $table) {
+            }
+            if (!in_array('kondisi_snapshot', $existingColumns)) {
                 $table->string('kondisi_snapshot')->nullable()->after('barcode_snapshot');
-            });
-        }
+            }
+        });
     }
 
     public function down(): void
