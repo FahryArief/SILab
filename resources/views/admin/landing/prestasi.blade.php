@@ -65,12 +65,17 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Medali</label>
-                            <select name="medali" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <select name="medali" id="add_medali" required onchange="toggleCustomMedal('add')" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                 <option value="gold">Gold</option>
                                 <option value="silver">Silver</option>
                                 <option value="bronze">Bronze</option>
                                 <option value="champion">Champion</option>
+                                <option value="lainnya">Lainnya (Ketik Sendiri)</option>
                             </select>
+                        </div>
+                        <div id="add_medali_custom_container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700">Tuliskan Jenis Pencapaian/Medali</label>
+                            <input type="text" name="medali_custom" id="add_medali_custom" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Contoh: Peserta Terbaik">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Ikon (Heroicons SVG - opsional)</label>
@@ -113,12 +118,17 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Medali</label>
-                            <select name="medali" id="edit_medali" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <select name="medali" id="edit_medali" required onchange="toggleCustomMedal('edit')" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                 <option value="gold">Gold</option>
                                 <option value="silver">Silver</option>
                                 <option value="bronze">Bronze</option>
                                 <option value="champion">Champion</option>
+                                <option value="lainnya">Lainnya (Ketik Sendiri)</option>
                             </select>
+                        </div>
+                        <div id="edit_medali_custom_container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700">Tuliskan Jenis Pencapaian/Medali</label>
+                            <input type="text" name="medali_custom" id="edit_medali_custom" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Contoh: Peserta Terbaik">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Ikon (Heroicons SVG - opsional)</label>
@@ -136,12 +146,39 @@
 </div>
 
 <script>
+function toggleCustomMedal(prefix) {
+    const select = document.getElementById(prefix + '_medali');
+    const customContainer = document.getElementById(prefix + '_medali_custom_container');
+    const customInput = document.getElementById(prefix + '_medali_custom');
+    
+    if (select.value === 'lainnya') {
+        customContainer.classList.remove('hidden');
+        customInput.setAttribute('required', 'required');
+    } else {
+        customContainer.classList.add('hidden');
+        customInput.removeAttribute('required');
+        customInput.value = '';
+    }
+}
+
 function editPrestasi(data) {
     document.getElementById('formEdit').action = `/admin/landing/prestasi/${data.id}`;
     document.getElementById('edit_judul').value = data.judul;
     document.getElementById('edit_deskripsi').value = data.deskripsi;
     document.getElementById('edit_tahun').value = data.tahun;
-    document.getElementById('edit_medali').value = data.medali;
+    
+    const validOptions = ['gold', 'silver', 'bronze', 'champion'];
+    const medaliSelect = document.getElementById('edit_medali');
+    
+    if (validOptions.includes(data.medali)) {
+        medaliSelect.value = data.medali;
+        toggleCustomMedal('edit');
+    } else {
+        medaliSelect.value = 'lainnya';
+        toggleCustomMedal('edit');
+        document.getElementById('edit_medali_custom').value = data.medali;
+    }
+    
     document.getElementById('edit_ikon').value = data.ikon || '';
     document.getElementById('modalEdit').classList.remove('hidden');
 }

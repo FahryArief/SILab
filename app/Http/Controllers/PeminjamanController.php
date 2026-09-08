@@ -9,6 +9,7 @@ use App\Http\Requests\StorePeminjamanRequest;
 use App\Models\Peminjaman;
 use App\Models\Barang;
 use App\Models\User;
+use App\Services\PeminjamanStatusService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -37,12 +38,12 @@ class PeminjamanController extends Controller
     {
         return DB::transaction(function() use ($request) {
             // Cek ketersediaan barang dengan lockForUpdate untuk mencegah race condition
-            $unavailableCount = Barang::whereIn('id', $request->barang_ids)
-                ->where('status_peminjaman', '!=', 'Tersedia')
-                ->lockForUpdate()
-                ->count();
+            $barangs = Barang::whereIn('id', $request->barang_ids)
+                ->lockForUpdate()->get();
 
-            if ($unavailableCount > 0) {
+            if ($barangs->count() !== count($request->barang_ids)
+                || $barangs->contains(fn (Barang $barang) => $barang->status_peminjaman !== 'Tersedia'
+                    || $barang->kondisi !== 'Baik')) {
                 return redirect()->back()->with('error', 'Satu atau lebih barang yang dipilih tidak tersedia untuk dipinjam.');
             }
 
@@ -69,7 +70,13 @@ class PeminjamanController extends Controller
             ]);
 
             // Sync pivot table (otomatis handle unique insert)
-            $peminjaman->barangs()->sync($request->barang_ids);
+            $peminjaman->barangs()->attach($barangs->mapWithKeys(fn (Barang $barang) => [
+                $barang->id => [
+                    'nama_barang_snapshot' => $barang->nama_barang,
+                    'barcode_snapshot' => $barang->barcode,
+                    'kondisi_snapshot' => $barang->kondisi,
+                ],
+            ])->all());
 
             // Karena sistem peminjaman multi-step (ACC dll), status barang tidak langsung diubah ke 'Dipinjam'
             // sampai disetujui Kepala Lab. Atau jika logic berubah, ubah disini.
@@ -88,7 +95,10 @@ class PeminjamanController extends Controller
             return redirect()->back()->with('error', 'Aksi ini tidak dapat dilakukan. Status saat ini: ' . $peminjaman->status);
         }
 
-        $peminjaman->update(['status' => 'divalidasi_teknisi']);
+        DB::transaction(function () use ($peminjaman) {
+            $locked = Peminjaman::whereKey($peminjaman->id)->lockForUpdate()->firstOrFail();
+            app(PeminjamanStatusService::class)->transition($locked, 'divalidasi_teknisi');
+        });
 
         Log::info('Peminjaman divalidasi oleh Teknisi', [
             'peminjaman_id' => $peminjaman->id,
@@ -108,10 +118,12 @@ class PeminjamanController extends Controller
             return redirect()->back()->with('error', 'Belum divalidasi oleh Teknisi.');
         }
 
-        $peminjaman->update(['status' => 'disetujui']);
-
-        // Update status barang menjadi 'Dipinjam'
-        Barang::whereIn('id', $peminjaman->barangs->pluck('id'))->update(['status_peminjaman' => 'Dipinjam']);
+        DB::transaction(function () use ($peminjaman) {
+            $locked = Peminjaman::whereKey($peminjaman->id)->lockForUpdate()->firstOrFail();
+            app(PeminjamanStatusService::class)->transition($locked, 'disetujui');
+            Barang::whereIn('id', $locked->barangs()->pluck('barangs.id'))
+                ->lockForUpdate()->get()->each->update(['status_peminjaman' => 'Dipinjam']);
+        });
 
         Log::info('Peminjaman di-ACC oleh Kepala Lab', [
             'peminjaman_id' => $peminjaman->id,
@@ -131,11 +143,13 @@ class PeminjamanController extends Controller
         }
 
         DB::transaction(function() use ($peminjaman, $request) {
-            $peminjaman->update(['status' => 'ditolak']);
+            $locked = Peminjaman::whereKey($peminjaman->id)->lockForUpdate()->firstOrFail();
+            app(PeminjamanStatusService::class)->transition($locked, 'ditolak');
 
             // Kembalikan barang menjadi Tersedia
-            $barangIds = $peminjaman->barangs()->pluck('barangs.id');
-            Barang::whereIn('id', $barangIds)->update(['status_peminjaman' => 'Tersedia']);
+            $barangIds = $locked->barangs()->pluck('barangs.id');
+            Barang::whereIn('id', $barangIds)->lockForUpdate()->get()
+                ->each->update(['status_peminjaman' => 'Tersedia']);
         });
 
         Log::info('Peminjaman ditolak', [
@@ -157,10 +171,12 @@ class PeminjamanController extends Controller
         }
 
         DB::transaction(function() use ($peminjaman) {
-            $peminjaman->update(['status' => 'dikembalikan']);
+            $locked = Peminjaman::whereKey($peminjaman->id)->lockForUpdate()->firstOrFail();
+            app(PeminjamanStatusService::class)->transition($locked, 'dikembalikan');
 
             // Update status barang kembali ke 'Tersedia'
-            Barang::whereIn('id', $peminjaman->barangs->pluck('id'))->update(['status_peminjaman' => 'Tersedia']);
+            Barang::whereIn('id', $locked->barangs()->pluck('barangs.id'))
+                ->lockForUpdate()->get()->each->update(['status_peminjaman' => 'Tersedia']);
         });
 
         Log::info('Peminjaman dikembalikan', [

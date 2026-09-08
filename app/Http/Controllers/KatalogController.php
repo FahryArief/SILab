@@ -7,6 +7,9 @@ use App\Models\Barang;
 use App\Models\Ruangan;
 use App\Models\Peminjaman;
 use App\Models\BookingRuangan;
+use App\Services\BookingConflictService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class KatalogController extends Controller
 {
@@ -23,24 +26,12 @@ class KatalogController extends Controller
     {
         $request->validate([
             'barang_ids' => 'required|array|min:1',
-            'barang_ids.*' => 'exists:barangs,id',
+            'barang_ids.*' => 'distinct|exists:barangs,id',
             'tanggal_pinjam' => 'required|date',
             'tanggal_kembali' => 'required|date|after_or_equal:tanggal_pinjam',
             'keperluan' => 'required|string|max:255',
             'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,png|max:2048' // Opsional
         ]);
-
-        // Cek ketersediaan lagi untuk keamanan
-        $unavailableCount = Barang::whereIn('id', $request->barang_ids)
-            ->where(function($q) {
-                $q->where('status_peminjaman', '!=', 'Tersedia')
-                  ->orWhere('kondisi', '!=', 'Baik');
-            })
-            ->count();
-            
-        if ($unavailableCount > 0) {
-            return redirect()->back()->with('error', 'Beberapa barang yang Anda pilih sudah tidak tersedia atau dalam kondisi rusak!');
-        }
 
         $nama_surat = null;
         if ($request->hasFile('surat_peminjaman')) {
@@ -49,21 +40,37 @@ class KatalogController extends Controller
             $file->storeAs('surat_peminjaman', $nama_surat, 'public');
         }
 
-        $peminjaman = Peminjaman::create([
-            'user_id' => auth()->id(),
-            'tanggal_pinjam' => $request->tanggal_pinjam,
-            'tanggal_kembali' => $request->tanggal_kembali,
-            'keperluan' => $request->keperluan,
-            'surat_peminjaman' => $nama_surat,
-            'status' => 'pending'
-        ]);
+        DB::transaction(function () use ($request, $nama_surat) {
+            $barangs = Barang::whereIn('id', $request->barang_ids)
+                ->lockForUpdate()
+                ->get();
 
-        // Attach ke tabel pivot peminjaman_barangs
-        $peminjaman->barangs()->attach($request->barang_ids);
+            if ($barangs->count() !== count($request->barang_ids)
+                || $barangs->contains(fn (Barang $barang) => $barang->status_peminjaman !== 'Tersedia'
+                    || $barang->kondisi !== 'Baik')) {
+                throw ValidationException::withMessages([
+                    'barang_ids' => 'Beberapa barang yang Anda pilih sudah tidak tersedia atau dalam kondisi rusak.',
+                ]);
+            }
 
-        // Update status fisik barang menjadi 'Dipinjam' sementara menunggu validasi?
-        // Ataukah biarkan tersedia sampai disetujui? Biasanya di-'booked' atau langsung 'Dipinjam' supaya tidak bisa dipinjam orang lain.
-        Barang::whereIn('id', $request->barang_ids)->update(['status_peminjaman' => 'Dipinjam']);
+            $peminjaman = Peminjaman::create([
+                'user_id' => auth()->id(),
+                'tanggal_pinjam' => $request->tanggal_pinjam,
+                'tanggal_kembali' => $request->tanggal_kembali,
+                'keperluan' => $request->keperluan,
+                'surat_peminjaman' => $nama_surat,
+                'status' => 'pending',
+            ]);
+
+            $peminjaman->barangs()->attach($barangs->mapWithKeys(fn (Barang $barang) => [
+                $barang->id => [
+                    'nama_barang_snapshot' => $barang->nama_barang,
+                    'barcode_snapshot' => $barang->barcode,
+                    'kondisi_snapshot' => $barang->kondisi,
+                ],
+            ])->all());
+            $barangs->each->update(['status_peminjaman' => 'Dipinjam']);
+        });
 
         return redirect('/peminjam/dashboard')->with('success', 'Pengajuan peminjaman alat berhasil dikirim! Silakan tunggu validasi Teknisi dan ACC Kepala Lab.');
     }
@@ -79,7 +86,7 @@ class KatalogController extends Controller
     public function storeRuangan(Request $request)
     {
         $request->validate([
-            'ruangan_id' => 'required',
+            'ruangan_id' => 'required|exists:ruangans,id',
             'tanggal_booking' => 'required|date',
             'waktu_mulai' => 'required',
             'waktu_selesai' => 'required|after:waktu_mulai',
@@ -96,24 +103,8 @@ class KatalogController extends Controller
             $file->storeAs('surat_peminjaman', $nama_surat, 'public');
         }
 
-        // Cek Bentrok Peminjaman Lain
-        $bentrok = BookingRuangan::where('ruangan_id', $request->ruangan_id)
-            ->where('tanggal_booking', $request->tanggal_booking)
-            ->whereIn('status', ['pending', 'disetujui'])
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                      ->orWhere(function ($q) use ($request) {
-                          $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                            ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                      });
-            })->exists();
-
-        if ($bentrok) {
-            return redirect()->back()->with('error', 'Maaf, ruangan sudah dibooking / diajukan orang lain pada jam tersebut!');
-        }
-
-        // CEK BENTROK DENGAN JADWAL KULIAH
+        // Jadwal kuliah dan booking divalidasi ulang di dalam transaksi di bawah.
+        $conflicts = app(BookingConflictService::class);
         $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
         if ($tahunAjaranAktif) {
             $daysMap = [
@@ -128,33 +119,45 @@ class KatalogController extends Controller
             $englishDay = date('l', strtotime($request->tanggal_booking));
             $hariBooking = $daysMap[$englishDay];
 
-            $bentrokKuliah = \App\Models\JadwalKuliah::where('ruangan_id', $request->ruangan_id)
-                ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
-                ->where('hari', $hariBooking)
-                ->where(function ($query) use ($request) {
-                    $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                          ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                          ->orWhere(function ($q) use ($request) {
-                              $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                                ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                          });
-                })->first();
+            $bentrokKuliah = $conflicts->findClassConflict(
+                (int) $request->ruangan_id,
+                $tahunAjaranAktif->id,
+                $hariBooking,
+                $request->waktu_mulai,
+                $request->waktu_selesai
+            );
 
             if ($bentrokKuliah) {
                 return redirect()->back()->with('error', 'Maaf, ruangan tidak dapat dipinjam karena sedang dipakai untuk Jadwal Kuliah (' . $bentrokKuliah->mata_kuliah . ') pada jam tersebut!');
             }
         }
 
-        BookingRuangan::create([
-            'user_id' => auth()->id(),
-            'ruangan_id' => $request->ruangan_id,
-            'tanggal_booking' => $request->tanggal_booking,
-            'waktu_mulai' => $request->waktu_mulai,
-            'waktu_selesai' => $request->waktu_selesai,
-            'keperluan' => $request->keperluan,
-            'surat_peminjaman' => $nama_surat,
-            'status' => 'pending'
-        ]);
+        try {
+            DB::transaction(function () use ($request, $nama_surat, $conflicts) {
+                Ruangan::whereKey($request->ruangan_id)->lockForUpdate()->firstOrFail();
+                if ($conflicts->hasBookingConflict(
+                    (int) $request->ruangan_id,
+                    $request->tanggal_booking,
+                    $request->waktu_mulai,
+                    $request->waktu_selesai
+                )) {
+                    throw new \DomainException('Maaf, ruangan sudah dibooking / diajukan orang lain pada jam tersebut!');
+                }
+
+                BookingRuangan::create([
+                    'user_id' => auth()->id(),
+                    'ruangan_id' => $request->ruangan_id,
+                    'tanggal_booking' => $request->tanggal_booking,
+                    'waktu_mulai' => $request->waktu_mulai,
+                    'waktu_selesai' => $request->waktu_selesai,
+                    'keperluan' => $request->keperluan,
+                    'surat_peminjaman' => $nama_surat,
+                    'status' => 'pending',
+                ]);
+            });
+        } catch (\DomainException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage())->withInput();
+        }
 
         return redirect('/peminjam/dashboard')->with('success', 'Pengajuan booking ruangan berhasil dikirim! Silakan tunggu persetujuan Operator Lab.');
     }

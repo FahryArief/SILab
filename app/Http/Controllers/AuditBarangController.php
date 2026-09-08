@@ -41,13 +41,17 @@ class AuditBarangController extends Controller
             return redirect()->back()->with('error', 'Tidak ada Tahun Ajaran yang aktif.');
         }
 
-        // Update or create audit entry for this barang in this periode
+        $barang = Barang::findOrFail($request->barang_id);
+
         AuditBarang::updateOrCreate(
             [
                 'audit_periode_id' => $request->audit_periode_id,
                 'barang_id' => $request->barang_id,
             ],
             [
+                'nama_barang_snapshot' => $barang->nama_barang,
+                'barcode_snapshot' => $barang->barcode,
+                'kondisi_snapshot' => $request->kondisi,
                 'tahun_ajaran_id' => $tahunAjaranAktif->id,
                 'teknisi_id' => auth()->id(),
                 'kondisi' => $request->kondisi,
@@ -57,7 +61,6 @@ class AuditBarangController extends Controller
         );
 
         // Update kondisi di master Barang
-        $barang = Barang::findOrFail($request->barang_id);
         $barang->update([
             'terakhir_diperiksa_at' => Carbon::now(),
             'kondisi' => $request->kondisi,
@@ -89,8 +92,14 @@ class AuditBarangController extends Controller
 
         $now = Carbon::now();
         $teknisiId = auth()->id();
+        $barangs = Barang::whereIn('id', $request->barang_ids)->get()->keyBy('id');
 
         foreach ($request->barang_ids as $barangId) {
+            $barang = $barangs->get($barangId);
+            if (! $barang) {
+                continue;
+            }
+
             // Update or create audit entry
             AuditBarang::updateOrCreate(
                 [
@@ -98,6 +107,9 @@ class AuditBarangController extends Controller
                     'barang_id' => $barangId,
                 ],
                 [
+                    'nama_barang_snapshot' => $barang->nama_barang,
+                    'barcode_snapshot' => $barang->barcode,
+                    'kondisi_snapshot' => 'Baik',
                     'tahun_ajaran_id' => $tahunAjaranAktif->id,
                     'teknisi_id' => $teknisiId,
                     'kondisi' => 'Baik',
