@@ -29,6 +29,15 @@ class Peminjaman extends Model
     // Relasi ke Barang (Many to Many)
     public function barangs()
     {
-        return $this->belongsToMany(Barang::class, 'peminjaman_barangs', 'peminjaman_id', 'barang_id')->withTimestamps();
+        return $this->belongsToMany(Barang::class, 'peminjaman_barangs', 'peminjaman_id', 'barang_id')
+            ->withPivot(['nama_barang_snapshot', 'barcode_snapshot', 'kondisi_snapshot'])
+            ->withTimestamps();
+    }
+
+    public function getTerlambatAttribute(): bool
+    {
+        return $this->status === 'disetujui'
+            && $this->tanggal_kembali !== null
+            && now()->startOfDay()->gt($this->tanggal_kembali);
     }
 }

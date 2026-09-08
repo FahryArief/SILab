@@ -12,6 +12,9 @@ class AuditBarang extends Model
     protected $fillable = [
         'audit_periode_id',
         'barang_id',
+        'nama_barang_snapshot',
+        'barcode_snapshot',
+        'kondisi_snapshot',
         'tahun_ajaran_id',
         'teknisi_id',
         'kondisi',

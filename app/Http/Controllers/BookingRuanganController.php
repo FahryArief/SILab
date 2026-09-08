@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Services\BookingConflictService;
 
 class BookingRuanganController extends Controller
 {
@@ -91,12 +92,13 @@ class BookingRuanganController extends Controller
 
             // CEK BENTROK — Safer overlap condition:
             // existing.start < new.end AND existing.end > new.start
-            $bentrok = BookingRuangan::where('ruangan_id', $request->ruangan_id)
-                ->where('tanggal_booking', $request->tanggal_booking)
-                ->whereIn('status', ['pending', 'disetujui'])
-                ->where('waktu_mulai', '<', $request->waktu_selesai)
-                ->where('waktu_selesai', '>', $request->waktu_mulai)
-                ->exists();
+            Ruangan::whereKey($request->ruangan_id)->lockForUpdate()->firstOrFail();
+            $bentrok = app(BookingConflictService::class)->hasBookingConflict(
+                (int) $request->ruangan_id,
+                $request->tanggal_booking,
+                $request->waktu_mulai,
+                $request->waktu_selesai
+            );
 
             if ($bentrok) {
                 throw new \Exception('BENTROK_BOOKING');
@@ -112,12 +114,13 @@ class BookingRuanganController extends Controller
                 ];
                 $hariBooking = $daysMap[date('l', strtotime($request->tanggal_booking))];
 
-                $bentrokKuliah = \App\Models\JadwalKuliah::where('ruangan_id', $request->ruangan_id)
-                    ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
-                    ->where('hari', $hariBooking)
-                    ->where('waktu_mulai', '<', $request->waktu_selesai)
-                    ->where('waktu_selesai', '>', $request->waktu_mulai)
-                    ->first();
+                    $bentrokKuliah = app(BookingConflictService::class)->findClassConflict(
+                        (int) $request->ruangan_id,
+                        $tahunAjaranAktif->id,
+                        $hariBooking,
+                        $request->waktu_mulai,
+                        $request->waktu_selesai
+                    );
 
                 if ($bentrokKuliah) {
                     throw new \Exception('BENTROK_KULIAH:' . $bentrokKuliah->mata_kuliah);
@@ -172,19 +175,18 @@ class BookingRuanganController extends Controller
 
         // Re-check overlap inside transaction before approving
         DB::transaction(function() use ($booking) {
-            $bentrok = BookingRuangan::where('ruangan_id', $booking->ruangan_id)
-                ->where('tanggal_booking', $booking->tanggal_booking)
-                ->where('id', '!=', $booking->id)
-                ->where('status', 'disetujui')
-                ->where('waktu_mulai', '<', $booking->waktu_selesai)
-                ->where('waktu_selesai', '>', $booking->waktu_mulai)
-                ->exists();
+            $locked = BookingRuangan::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            Ruangan::whereKey($locked->ruangan_id)->lockForUpdate()->firstOrFail();
+            $bentrok = app(BookingConflictService::class)->hasBookingConflict(
+                $locked->ruangan_id, $locked->tanggal_booking, $locked->waktu_mulai,
+                $locked->waktu_selesai, $locked->id
+            );
 
             if ($bentrok) {
                 throw new \Exception('BENTROK_APPROVE');
             }
 
-            $booking->update(['status' => 'disetujui']);
+            $locked->update(['status' => 'disetujui']);
             
             Log::info('Booking Ruangan disetujui', [
                 'booking_id' => $booking->id,
