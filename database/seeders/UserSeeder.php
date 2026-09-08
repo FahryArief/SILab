@@ -12,31 +12,41 @@ class UserSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-public function run(): void
+    public function run(): void
     {
+        // 1. Super Admin
         User::create([
             'name' => 'Super Admin',
             'email' => 'admin@test.com',
             'password' => Hash::make('password123'),
-            'role' => 'admin',
+            'role' => 'super_admin',
         ]);
 
+        // 2. Teknisi (Operator Lab)
         User::create([
-            'name' => 'Operator Lab',
-            'email' => 'operator@test.com',
+            'name' => 'Teknisi Lab',
+            'email' => 'teknisi@test.com',
             'password' => Hash::make('password123'),
-            'role' => 'operator',
+            'role' => 'teknisi',
         ]);
 
-        // 3. Akun Koordinator Prodi (Hanya Lihat Laporan)
+        // 3. Kepala Laboratorium
         User::create([
-            'name' => 'Koordinator Prodi',
+            'name' => 'Kepala Lab',
+            'email' => 'kepalalab@test.com',
+            'password' => Hash::make('password123'),
+            'role' => 'kepala_lab',
+        ]);
+
+        // 4. Koordinator Prodi
+        User::create([
+            'name' => 'Ka Prodi',
             'email' => 'prodi@test.com',
             'password' => Hash::make('password123'),
-            'role' => 'prodi',
+            'role' => 'ka_prodi',
         ]);
 
-        // 4. Akun Mahasiswa / Peminjam
+        // 5. Mahasiswa / Peminjam
         User::create([
             'name' => 'Mahasiswa Peminjam',
             'email' => 'peminjam@test.com',

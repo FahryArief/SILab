@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\BookingRuangan;
 use App\Models\Ruangan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-
 
 class BookingRuanganController extends Controller
 {
@@ -23,7 +24,7 @@ class BookingRuanganController extends Controller
                     ->get();
 
         // 3. Ambil data mahasiswa untuk modal
-        $users = \App\Models\User::where('role', 'peminjam')->get();
+        $users = User::where('role', 'peminjam')->get();
 
         // 4. LOGIKA KALENDER DINAMIS
         $currentMonth = date('m', strtotime($selectedDate));
@@ -69,79 +70,66 @@ class BookingRuanganController extends Controller
         ));
     }
 
-public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
-            'user_id'         => 'nullable', // Sekarang boleh kosong
-            'nama_peminjam'   => 'required_without:user_id', // Wajib diisi jika user_id kosong
-            'ruangan_id'      => 'required',
+            'user_id'         => 'nullable|exists:users,id',
+            'nama_peminjam'   => 'required_without:user_id|nullable|string|max:255',
+            'ruangan_id'      => 'required|exists:ruangans,id',
             'tanggal_booking' => 'required|date',
             'waktu_mulai'     => 'required',
             'waktu_selesai'   => 'required|after:waktu_mulai',
             'keperluan'       => 'required|string|max:255',
-            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ], [
             'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
-            'nama_peminjam.required_without' => 'Nama peminjam wajib diisi jika tidak memilih akun mahasiswa!'
+            'nama_peminjam.required_without' => 'Nama peminjam wajib diisi jika tidak memilih akun mahasiswa!',
         ]);
 
-        $nama_surat = null;
-        if ($request->hasFile('surat_peminjaman')) {
-            $file = $request->file('surat_peminjaman');
-            $nama_surat = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('surat_peminjaman', $nama_surat, 'public');
-        }
-
-// CEK BENTROK (Overlap Check) - Hanya cek yang statusnya pending atau disetujui
-        $bentrok = BookingRuangan::where('ruangan_id', $request->ruangan_id)
-            ->where('tanggal_booking', $request->tanggal_booking)
-            ->whereIn('status', ['pending', 'disetujui']) // <-- TAMBAHKAN BARIS INI
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                    ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                    ->orWhere(function ($q) use ($request) {
-                        $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                            ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                    });
-            })->exists();
-
-        if ($bentrok) {
-            return redirect()->back()->with('error', 'Maaf, ruangan tersebut sudah dibooking pada jam yang Anda pilih!');
-        }
-
-        // CEK BENTROK DENGAN JADWAL KULIAH
-        $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
-        if ($tahunAjaranAktif) {
-            $daysMap = [
-                'Sunday' => 'Minggu',
-                'Monday' => 'Senin',
-                'Tuesday' => 'Selasa',
-                'Wednesday' => 'Rabu',
-                'Thursday' => 'Kamis',
-                'Friday' => 'Jumat',
-                'Saturday' => 'Sabtu',
-            ];
-            $englishDay = date('l', strtotime($request->tanggal_booking));
-            $hariBooking = $daysMap[$englishDay];
-
-            $bentrokKuliah = \App\Models\JadwalKuliah::where('ruangan_id', $request->ruangan_id)
-                ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
-                ->where('hari', $hariBooking)
-                ->where(function ($query) use ($request) {
-                    $query->whereBetween('waktu_mulai', [$request->waktu_mulai, $request->waktu_selesai])
-                          ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
-                          ->orWhere(function ($q) use ($request) {
-                              $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                                ->where('waktu_selesai', '>=', $request->waktu_selesai);
-                          });
-                })->first();
-
-            if ($bentrokKuliah) {
-                return redirect()->back()->with('error', 'Maaf, ruangan sedang dipakai untuk Jadwal Kuliah (' . $bentrokKuliah->mata_kuliah . ') pada waktu tersebut!');
+        DB::transaction(function() use ($request) {
+            // Upload surat with hashed name to private disk
+            $nama_surat = null;
+            if ($request->hasFile('surat_peminjaman')) {
+                $file = $request->file('surat_peminjaman');
+                $nama_surat = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('surat_peminjaman', $nama_surat, 'local');
             }
-        }
 
-        DB::transaction(function() use ($request, $nama_surat) {
+            // CEK BENTROK — Safer overlap condition:
+            // existing.start < new.end AND existing.end > new.start
+            $bentrok = BookingRuangan::where('ruangan_id', $request->ruangan_id)
+                ->where('tanggal_booking', $request->tanggal_booking)
+                ->whereIn('status', ['pending', 'disetujui'])
+                ->where('waktu_mulai', '<', $request->waktu_selesai)
+                ->where('waktu_selesai', '>', $request->waktu_mulai)
+                ->exists();
+
+            if ($bentrok) {
+                throw new \Exception('BENTROK_BOOKING');
+            }
+
+            // CEK BENTROK DENGAN JADWAL KULIAH
+            $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
+            if ($tahunAjaranAktif) {
+                $daysMap = [
+                    'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
+                    'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat',
+                    'Saturday' => 'Sabtu',
+                ];
+                $hariBooking = $daysMap[date('l', strtotime($request->tanggal_booking))];
+
+                $bentrokKuliah = \App\Models\JadwalKuliah::where('ruangan_id', $request->ruangan_id)
+                    ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
+                    ->where('hari', $hariBooking)
+                    ->where('waktu_mulai', '<', $request->waktu_selesai)
+                    ->where('waktu_selesai', '>', $request->waktu_mulai)
+                    ->first();
+
+                if ($bentrokKuliah) {
+                    throw new \Exception('BENTROK_KULIAH:' . $bentrokKuliah->mata_kuliah);
+                }
+            }
+
             BookingRuangan::create([
                 'user_id'         => $request->user_id,
                 'nama_peminjam'   => $request->nama_peminjam,
@@ -162,8 +150,8 @@ public function store(Request $request)
     {
         $booking = BookingRuangan::findOrFail($id);
 
-        if ($booking->status === 'selesai') {
-            return redirect()->back()->with('error', 'Ruangan ini sudah ditandai selesai sebelumnya!');
+        if ($booking->status !== 'disetujui') {
+            return redirect()->back()->with('error', 'Hanya booking yang disetujui yang bisa ditandai selesai!');
         }
 
         $booking->update([
@@ -181,7 +169,23 @@ public function store(Request $request)
             return redirect()->back()->with('error', 'Status sudah ' . $booking->status . ', tidak bisa disetujui lagi.');
         }
 
-        $booking->update(['status' => 'disetujui']);
+        // Re-check overlap inside transaction before approving
+        DB::transaction(function() use ($booking) {
+            $bentrok = BookingRuangan::where('ruangan_id', $booking->ruangan_id)
+                ->where('tanggal_booking', $booking->tanggal_booking)
+                ->where('id', '!=', $booking->id)
+                ->where('status', 'disetujui')
+                ->where('waktu_mulai', '<', $booking->waktu_selesai)
+                ->where('waktu_selesai', '>', $booking->waktu_mulai)
+                ->exists();
+
+            if ($bentrok) {
+                throw new \Exception('BENTROK_APPROVE');
+            }
+
+            $booking->update(['status' => 'disetujui']);
+        });
+
         return redirect()->back()->with('success', 'Pengajuan ruangan berhasil disetujui!');
     }
 
@@ -195,5 +199,35 @@ public function store(Request $request)
 
         $booking->update(['status' => 'ditolak']);
         return redirect()->back()->with('success', 'Pengajuan ruangan telah ditolak.');
+    }
+
+    /**
+     * Download surat booking (authorized endpoint).
+     */
+    public function downloadSurat($id)
+    {
+        $booking = BookingRuangan::findOrFail($id);
+
+        $user = auth()->user();
+
+        // Allow: owner, teknisi, kepala_lab, super_admin
+        $allowed = in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab'])
+                   || $user->id === $booking->user_id;
+
+        if (!$allowed) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses dokumen ini.');
+        }
+
+        if (!$booking->surat_peminjaman) {
+            abort(404, 'Surat peminjaman tidak ditemukan.');
+        }
+
+        $path = 'surat_peminjaman/' . $booking->surat_peminjaman;
+
+        if (!Storage::disk('local')->exists($path)) {
+            abort(404, 'File surat peminjaman tidak ditemukan.');
+        }
+
+        return Storage::disk('local')->download($path);
     }
 }

@@ -3,50 +3,66 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
 
 class UserController extends Controller
 {
+    /**
+     * Valid roles for the application.
+     */
+    public const VALID_ROLES = ['super_admin', 'teknisi', 'kepala_lab', 'ka_prodi', 'peminjam'];
+
+    use AuthorizesRequests;
+
     public function index()
     {
+        $this->authorize('viewAny', User::class);
         $users = User::latest()->get();
         return view('admin.users.index', compact('users'));
     }
 
     // Tambah Pengguna Baru
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:super_admin,teknisi,kepala_lab,ka_prodi,peminjam',
-        ]);
-
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => $request->role,
         ]);
 
+        Log::info('User created', [
+            'admin_id' => auth()->id(),
+            'created_user_id' => $user->id,
+            'role' => $user->role,
+        ]);
+
         return redirect()->back()->with('success', 'Pengguna baru berhasil ditambahkan!');
     }
 
     // Update Data Pengguna (Nama, Email, Role, Password Opsional)
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:super_admin,teknisi,kepala_lab,ka_prodi,peminjam',
-            'password' => 'nullable|string|min:6',
-        ]);
+        $this->authorize('update', $user);
 
-        // Cegah mengubah role diri sendiri menjadi bukan super_admin
-        if ($user->id === auth()->id() && $request->role !== 'super_admin') {
+        // Cegah mengubah role diri sendiri
+        if ($user->id === auth()->id() && $request->role !== $user->role) {
             return redirect()->back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri!');
         }
+
+        // Cegah demosi super_admin terakhir
+        if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
+            $superAdminCount = User::where('role', 'super_admin')->count();
+            if ($superAdminCount <= 1) {
+                return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+            }
+        }
+
+        $oldRole = $user->role;
 
         $data = [
             'name' => $request->name,
@@ -60,22 +76,50 @@ class UserController extends Controller
 
         $user->update($data);
 
+        if ($oldRole !== $request->role) {
+            Log::info('User role changed', [
+                'admin_id' => auth()->id(),
+                'user_id' => $user->id,
+                'old_role' => $oldRole,
+                'new_role' => $request->role,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Data pengguna berhasil diperbarui!');
     }
 
     public function updateRole(Request $request, User $user)
     {
+        $this->authorize('update', $user);
+
         $request->validate([
-            'role' => 'required|in:super_admin,teknisi,kepala_lab,ka_prodi,peminjam'
+            'role' => 'required|in:' . implode(',', self::VALID_ROLES),
         ]);
 
-        // Mencegah admin menghapus/mengubah role dirinya sendiri agar tidak terkunci dari sistem
-        if ($user->id === auth()->id() && $request->role !== 'super_admin') {
+        // Cegah admin mengubah role diri sendiri
+        if ($user->id === auth()->id() && $request->role !== $user->role) {
             return redirect()->back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri!');
         }
 
+        // Cegah demosi super_admin terakhir
+        if ($user->role === 'super_admin' && $request->role !== 'super_admin') {
+            $superAdminCount = User::where('role', 'super_admin')->count();
+            if ($superAdminCount <= 1) {
+                return redirect()->back()->with('error', 'Tidak dapat mengubah role. Ini adalah satu-satunya Super Admin!');
+            }
+        }
+
+        $oldRole = $user->role;
+
         $user->update([
             'role' => $request->role
+        ]);
+
+        Log::info('User role changed', [
+            'admin_id' => auth()->id(),
+            'user_id' => $user->id,
+            'old_role' => $oldRole,
+            'new_role' => $request->role,
         ]);
 
         return redirect()->back()->with('success', 'Role pengguna berhasil diperbarui!');
@@ -83,10 +127,14 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // Mencegah admin menghapus dirinya sendiri
-        if ($user->id === auth()->id()) {
-            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri!');
-        }
+        $this->authorize('delete', $user);
+
+        Log::info('User deleted', [
+            'admin_id' => auth()->id(),
+            'deleted_user_id' => $user->id,
+            'deleted_user_role' => $user->role,
+            'deleted_user_email' => $user->email,
+        ]);
 
         $user->delete();
 

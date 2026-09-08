@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\StoreBarangRequest;
+use App\Http\Requests\UpdateBarangRequest;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Ruangan;
@@ -34,20 +36,8 @@ class BarangController extends Controller
     }
 
     // 2. Menyimpan Data ke Database (Multi Item)
-    public function store(Request $request)
+    public function store(StoreBarangRequest $request)
     {
-        $request->validate([
-            'nama_barang' => 'required',
-            'kategori_id' => 'required',
-            'ruangan_id' => 'required', // Ini ruangan default
-            'singkatan' => 'required',
-            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'items' => 'required|array|min:1',
-            'items.*.kode_inventaris' => 'required|unique:barangs,barcode',
-            'items.*.kondisi' => 'required',
-            'items.*.kepemilikan' => 'required',
-            'items.*.foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
 
         $default_foto = null;
         if ($request->hasFile('foto_barang')) {
@@ -99,20 +89,9 @@ class BarangController extends Controller
     }
 
     // 4. Menyimpan Perubahan Data (Update Item Fisik)
-    public function update(Request $request, $id)
+    public function update(UpdateBarangRequest $request, $id)
     {
         $barang = Barang::findOrFail($id);
-
-        $request->validate([
-            'nama_barang' => 'required',
-            'kategori_id' => 'required',
-            'ruangan_id' => 'required',
-            'barcode' => 'required|unique:barangs,barcode,' . $barang->id,
-            'foto_barang' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'kondisi' => 'required',
-            'kepemilikan' => 'required',
-            'status_peminjaman' => 'required|in:Tersedia,Dipinjam,Pemeliharaan',
-        ]);
 
         $nama_foto = $barang->foto_barang;
 

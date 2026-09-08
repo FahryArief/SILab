@@ -6,5 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kategori extends Model
 {
-    protected $guarded = []; // <-- Tambahkan baris ini
+    protected $fillable = [
+        'nama_kategori',
+    ];
+
+    public function barangs()
+    {
+        return $this->hasMany(Barang::class);
+    }
 }

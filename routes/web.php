@@ -120,7 +120,6 @@ Route::middleware(['auth', 'role:kepala_lab,super_admin'])->group(function () {
     Route::get('/kepala-lab/barang', [BarangController::class, 'index'])->name('kepala_lab.barang.index');
     Route::get('/kepala-lab/ruangan', [RuanganController::class, 'index'])->name('kepala_lab.ruangan.index');
     Route::get('/kepala-lab/booking', [BookingRuanganController::class, 'index'])->name('kepala_lab.booking.index');
-    Route::post('/operator/booking', [BookingRuanganController::class, 'store'])->name('booking.store');
 
 });
 
@@ -211,6 +210,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Authorized document download endpoints
+    Route::get('/surat-peminjaman/{id}/download', [PeminjamanController::class, 'downloadSurat'])->name('peminjaman.download-surat');
+    Route::get('/surat-booking/{id}/download', [BookingRuanganController::class, 'downloadSurat'])->name('booking.download-surat');
 });
 
 // ROUTE PUBLIC: Scan QR Code Ruangan (tanpa auth)

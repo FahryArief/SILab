@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ruangan extends Model
 {
-    protected $guarded = []; // <-- Tambahkan baris ini
+    protected $fillable = [
+        'nama_ruangan',
+        'keterangan',
+        'foto_ruangan',
+        'kapasitas',
+        'lokasi',
+        'kode_ruangan',
+        'terakhir_diperiksa_at',
+    ];
 
     public function getStatusLabelAttribute()
     {

@@ -29,7 +29,7 @@ return new class extends Migration
         // 3. Recreate peminjamans with new structure
         Schema::create('peminjamans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('nama_peminjam')->nullable();
             // Tidak ada barang_id atau jumlah_pinjam karena pindah ke pivot
             $table->date('tanggal_pinjam');
@@ -45,6 +45,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('peminjaman_id')->constrained('peminjamans')->onDelete('cascade');
             $table->foreignId('barang_id')->constrained('barangs')->onDelete('cascade');
+            $table->unique(['peminjaman_id', 'barang_id']);
             $table->timestamps();
         });
 

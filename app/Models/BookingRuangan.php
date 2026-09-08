@@ -6,8 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookingRuangan extends Model
 {
-    // Mengizinkan semua kolom diisi secara massal
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'nama_peminjam',
+        'ruangan_id',
+        'tanggal_booking',
+        'waktu_mulai',
+        'waktu_selesai',
+        'keperluan',
+        'surat_peminjaman',
+        'catatan_admin',
+        'status',
+    ];
 
     // Relasi ke tabel User (Peminjam)
     public function user()

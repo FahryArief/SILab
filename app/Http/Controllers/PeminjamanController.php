@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\Peminjaman;
 use App\Models\Barang;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-
 
 class PeminjamanController extends Controller
 {
@@ -24,19 +25,21 @@ class PeminjamanController extends Controller
 
         return view('operator.peminjaman.index', compact('peminjamans', 'barangs', 'users'));
     }
+
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'nullable',
-            'nama_peminjam' => 'required_without:user_id',
+            'user_id' => 'nullable|exists:users,id',
+            'nama_peminjam' => 'required_without:user_id|nullable|string|max:255',
             'barang_ids' => 'required|array|min:1',
-            'barang_ids.*' => 'exists:barangs,id',
+            'barang_ids.*' => 'exists:barangs,id|distinct',
             'tanggal_pinjam' => 'required|date',
             'tanggal_kembali' => 'required|date|after_or_equal:tanggal_pinjam',
             'keperluan' => 'required|string|max:255',
-            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,png|max:2048'
+            'surat_peminjaman' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
+        // Cek ketersediaan barang
         $unavailableCount = Barang::whereIn('id', $request->barang_ids)
             ->where(function($q) {
                 $q->where('status_peminjaman', '!=', 'Tersedia')
@@ -48,14 +51,17 @@ class PeminjamanController extends Controller
             return redirect()->back()->with('error', 'Beberapa barang sudah tidak tersedia atau dalam kondisi rusak!');
         }
 
+        // Upload file INSIDE transaction with rollback safety
         $nama_surat = null;
-        if ($request->hasFile('surat_peminjaman')) {
-            $file = $request->file('surat_peminjaman');
-            $nama_surat = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('surat_peminjaman', $nama_surat, 'public');
-        }
 
-        DB::transaction(function() use ($request, $nama_surat) {
+        DB::transaction(function() use ($request, &$nama_surat) {
+            // Upload surat with hashed name to private disk
+            if ($request->hasFile('surat_peminjaman')) {
+                $file = $request->file('surat_peminjaman');
+                $nama_surat = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('surat_peminjaman', $nama_surat, 'local');
+            }
+
             // Simpan data peminjaman
             $peminjaman = Peminjaman::create([
                 'user_id' => $request->user_id,
@@ -112,7 +118,7 @@ class PeminjamanController extends Controller
     public function reject(Request $request, $id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
-        
+
         if (!in_array($peminjaman->status, ['pending', 'divalidasi_teknisi'])) {
             return redirect()->back()->with('error', 'Aksi ini tidak dapat dilakukan. Status saat ini: ' . $peminjaman->status);
         }
@@ -122,7 +128,7 @@ class PeminjamanController extends Controller
                 'status' => 'ditolak',
                 'catatan_admin' => $request->catatan
             ]);
-            
+
             // Kembalikan barang menjadi Tersedia
             $barangIds = $peminjaman->barangs()->pluck('barangs.id');
             Barang::whereIn('id', $barangIds)->update(['status_peminjaman' => 'Tersedia']);
@@ -135,8 +141,9 @@ class PeminjamanController extends Controller
     {
         $peminjaman = Peminjaman::findOrFail($id);
 
-        if ($peminjaman->status === 'dikembalikan') {
-            return redirect()->back()->with('error', 'Barang sudah dikembalikan sebelumnya!');
+        // Only allow return from 'disetujui' status
+        if ($peminjaman->status !== 'disetujui') {
+            return redirect()->back()->with('error', 'Hanya peminjaman yang sedang berjalan (disetujui) yang bisa dikembalikan!');
         }
 
         DB::transaction(function() use ($peminjaman) {
@@ -148,5 +155,35 @@ class PeminjamanController extends Controller
         });
 
         return redirect()->back()->with('success', 'Barang fisik berhasil dikembalikan ke lab!');
+    }
+
+    /**
+     * Download surat peminjaman (authorized endpoint).
+     */
+    public function downloadSurat($id)
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
+
+        $user = auth()->user();
+
+        // Allow: owner, teknisi, kepala_lab, super_admin
+        $allowed = in_array($user->role, ['super_admin', 'teknisi', 'kepala_lab'])
+                   || $user->id === $peminjaman->user_id;
+
+        if (!$allowed) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses dokumen ini.');
+        }
+
+        if (!$peminjaman->surat_peminjaman) {
+            abort(404, 'Surat peminjaman tidak ditemukan.');
+        }
+
+        $path = 'surat_peminjaman/' . $peminjaman->surat_peminjaman;
+
+        if (!Storage::disk('local')->exists($path)) {
+            abort(404, 'File surat peminjaman tidak ditemukan.');
+        }
+
+        return Storage::disk('local')->download($path);
     }
 }
