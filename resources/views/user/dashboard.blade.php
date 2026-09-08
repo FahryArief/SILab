@@ -3,7 +3,7 @@
         Dashboard Mahasiswa
     </x-slot>
 
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="max-w-7xl mx-auto space-y-10">
 
         <div class="bg-indigo-600 rounded-lg p-8 shadow-md text-white flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
             <div class="relative z-10">
@@ -21,10 +21,10 @@
             <svg class="absolute right-0 top-0 h-full w-64 text-indigo-500 opacity-50 transform translate-x-16" fill="currentColor" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50"></circle></svg>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
             @if($peminjaman_terlambat > 0 || $peminjaman_menunggu > 0 || $booking_menunggu > 0 || $peminjaman_ditolak->isNotEmpty())
                 @if($peminjaman_menunggu > 0 || $booking_menunggu > 0)
-                    <div class="md:col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" role="status">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3" role="status">
                         <span class="text-xl">🔔</span>
                         <div class="text-sm text-amber-900">
                             <p class="font-bold">Ada pengajuan yang masih diproses.</p>
@@ -41,7 +41,7 @@
                     </div>
                 @endif
                 @if($peminjaman_ditolak->isNotEmpty())
-                    <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
                         <span class="text-xl">❗</span>
                         <div class="text-sm text-red-900">
                             <p class="font-bold">Ada {{ $peminjaman_ditolak->count() }} pengajuan peminjaman yang ditolak.</p>
@@ -51,7 +51,7 @@
                 @endif
             @endif
             @if($peminjaman_terlambat > 0)
-                <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
                     <svg class="w-5 h-5 text-red-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86l-7.82 14A2 2 0 004.21 21h15.58a2 2 0 001.74-3.14l-7.82-14a2 2 0 00-3.42 0z"/></svg>
                     <div class="text-sm text-red-800">
                         <p class="font-bold">Ada {{ $peminjaman_terlambat }} peminjaman yang melewati tenggat.</p>
@@ -60,6 +60,7 @@
                     </div>
                 </div>
             @endif
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center">
                 <div class="p-4 bg-amber-50 text-amber-500 rounded-lg mr-4">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -77,6 +78,7 @@
                     <p class="text-sm font-bold text-gray-500 uppercase">Ruangan Aktif</p>
                     <h3 class="text-2xl font-black text-gray-800">{{ $tanggungan_ruang }} <span class="text-sm font-medium text-gray-400">Sedang Digunakan</span></h3>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -107,7 +109,7 @@
                                    ($pinjam->status == 'pending' ? 'text-amber-600' :
                                    ($pinjam->status == 'divalidasi_teknisi' ? 'text-indigo-600' :
                                    ($pinjam->status == 'disetujui' ? 'text-emerald-600' : 'text-gray-500'))) }}">
-                                {{ $pinjam->terlambat ? 'Terlambat ' . $pinjam->hari_terlambat . ' hari' : str_replace('_', ' ', $pinjam->status) }}
+                                {{ $pinjam->dikembalikan_terlambat ? 'Dikembalikan terlambat ' . $pinjam->hari_terlambat . ' hari' : ($pinjam->terlambat ? 'Terlambat ' . $pinjam->hari_terlambat . ' hari' : str_replace('_', ' ', $pinjam->status)) }}
                             </span>
                         </li>
                     @empty
