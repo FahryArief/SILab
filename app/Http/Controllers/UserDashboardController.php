@@ -27,9 +27,16 @@ class UserDashboardController extends Controller
 
         // Hitung total tanggungan (yang disetujui tapi belum dikembalikan/selesai)
         $tanggungan_barang = Peminjaman::where('user_id', $user_id)->where('status', 'disetujui')->count();
+        $peminjaman_terlambat = Peminjaman::where('user_id', $user_id)
+            ->where('status', 'disetujui')
+            ->whereDate('tanggal_kembali', '<', now()->toDateString())
+            ->count();
         $tanggungan_ruang = BookingRuangan::where('user_id', $user_id)->where('status', 'disetujui')->count();
 
-        return view('user.dashboard', compact('my_bookings', 'my_peminjamans', 'tanggungan_barang', 'tanggungan_ruang'));
+        return view('user.dashboard', compact(
+            'my_bookings', 'my_peminjamans', 'tanggungan_barang',
+            'peminjaman_terlambat', 'tanggungan_ruang'
+        ));
     }
 
     public function riwayat()

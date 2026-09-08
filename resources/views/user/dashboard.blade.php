@@ -22,6 +22,15 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @if($peminjaman_terlambat > 0)
+                <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
+                    <svg class="w-5 h-5 text-red-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86l-7.82 14A2 2 0 004.21 21h15.58a2 2 0 001.74-3.14l-7.82-14a2 2 0 00-3.42 0z"/></svg>
+                    <div class="text-sm text-red-800">
+                        <p class="font-bold">Ada {{ $peminjaman_terlambat }} peminjaman yang melewati tenggat.</p>
+                        <p class="mt-1">Segera kembalikan barang dan hubungi laboratorium bila membutuhkan bantuan.</p>
+                    </div>
+                </div>
+            @endif
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center">
                 <div class="p-4 bg-amber-50 text-amber-500 rounded-lg mr-4">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -52,9 +61,10 @@
                         <li class="p-4 flex justify-between items-center hover:bg-gray-50">
                             <div class="flex items-center">
                                 <div class="w-2 h-2 rounded-full mr-3
-                                    {{ $pinjam->status == 'pending' ? 'bg-amber-400' :
+                                    {{ $pinjam->terlambat ? 'bg-red-500' :
+                                       ($pinjam->status == 'pending' ? 'bg-amber-400' :
                                        ($pinjam->status == 'divalidasi_teknisi' ? 'bg-indigo-400' :
-                                       ($pinjam->status == 'disetujui' ? 'bg-emerald-500' : 'bg-gray-300')) }}"></div>
+                                       ($pinjam->status == 'disetujui' ? 'bg-emerald-500' : 'bg-gray-300'))) }}"></div>
                                 <div>
                                     <p class="text-sm font-bold text-gray-800">
                                         Pinjam: {{ $pinjam->barangs->pluck('nama_barang')->unique()->implode(', ') }}
@@ -64,10 +74,11 @@
                                 </div>
                             </div>
                             <span class="text-[10px] font-bold uppercase
-                                {{ $pinjam->status == 'pending' ? 'text-amber-600' :
+                                {{ $pinjam->terlambat ? 'text-red-600' :
+                                   ($pinjam->status == 'pending' ? 'text-amber-600' :
                                    ($pinjam->status == 'divalidasi_teknisi' ? 'text-indigo-600' :
-                                   ($pinjam->status == 'disetujui' ? 'text-emerald-600' : 'text-gray-500')) }}">
-                                {{ str_replace('_', ' ', $pinjam->status) }}
+                                   ($pinjam->status == 'disetujui' ? 'text-emerald-600' : 'text-gray-500'))) }}">
+                                {{ $pinjam->terlambat ? 'Terlambat ' . $pinjam->hari_terlambat . ' hari' : str_replace('_', ' ', $pinjam->status) }}
                             </span>
                         </li>
                     @empty
