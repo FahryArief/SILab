@@ -80,6 +80,8 @@
         /* Kecil: 28×17mm */
         .label-box.lbl-kecil { width: 28mm; height: 17mm; padding: 0.5mm; }
         .label-box.lbl-kecil .lab-title { display: none; }
+        .label-box.lbl-kecil .label-header img { width: 3mm; height: 3mm; }
+        .label-box.lbl-kecil .polinela-mark { font-size: 3px; }
         .label-box.lbl-kecil .nama-barang { font-size: 5px; margin-bottom: 0; }
         .label-box.lbl-kecil .qr-img svg { width: 10mm !important; height: 10mm !important; }
         .label-box.lbl-kecil .info { font-size: 4px; letter-spacing: 0; }
@@ -87,6 +89,8 @@
         /* Sedang: 48×27mm */
         .label-box.lbl-sedang { width: 48mm; height: 27mm; padding: 1mm; }
         .label-box.lbl-sedang .lab-title { font-size: 5px; letter-spacing: 1px; margin-bottom: 1px; }
+        .label-box.lbl-sedang .label-header img { width: 4mm; height: 4mm; }
+        .label-box.lbl-sedang .polinela-mark { font-size: 4px; }
         .label-box.lbl-sedang .nama-barang { font-size: 6.5px; margin-bottom: 1px; }
         .label-box.lbl-sedang .qr-img svg { width: 14mm !important; height: 14mm !important; }
         .label-box.lbl-sedang .info { font-size: 5px; }
@@ -94,6 +98,7 @@
         /* Standar: 66×34mm (default) */
         .label-box.lbl-standar { width: 66mm; height: 33.9mm; padding: 2mm; }
         .label-box.lbl-standar .lab-title { font-size: 7px; letter-spacing: 2px; margin-bottom: 2px; }
+        .label-box.lbl-standar .label-header img { width: 6mm; height: 6mm; }
         .label-box.lbl-standar .nama-barang { font-size: 8px; margin-bottom: 1px; }
         .label-box.lbl-standar .qr-img svg { width: 18mm !important; height: 18mm !important; }
         .label-box.lbl-standar .info { font-size: 6px; letter-spacing: 0.5px; }
@@ -101,10 +106,15 @@
         /* Besar: 98×55mm */
         .label-box.lbl-besar { width: 98mm; height: 55mm; padding: 3mm; }
         .label-box.lbl-besar .lab-title { font-size: 9px; letter-spacing: 2px; margin-bottom: 3px; }
+        .label-box.lbl-besar .label-header img { width: 9mm; height: 9mm; }
+        .label-box.lbl-besar .polinela-mark { font-size: 10px; }
         .label-box.lbl-besar .nama-barang { font-size: 11px; margin-bottom: 2px; }
         .label-box.lbl-besar .qr-img svg { width: 30mm !important; height: 30mm !important; }
         .label-box.lbl-besar .info { font-size: 8px; letter-spacing: 0.5px; }
 
+        .label-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .label-header img { width: 7mm; height: 7mm; object-fit: contain; }
+        .polinela-mark { color: #123b78; font-size: 7px; font-weight: 900; line-height: 0.9; letter-spacing: -0.3px; }
         .lab-title { font-weight: 800; color: #6366f1; text-transform: uppercase; width: 100%; }
         .nama-barang { font-weight: 900; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         .qr-img { margin: 1mm 0; }
@@ -157,7 +167,11 @@
         <div class="page grid-standar">
             @foreach($chunk as $barang)
             <div class="label-box lbl-standar" data-barcode="{{ $barang->barcode }}" data-nama="{{ $barang->nama_barang }}">
-                <div class="lab-title">Inventaris TRPL</div>
+                <div class="label-header">
+                    <img src="{{ asset('images/trpl.png') }}" alt="Logo TRPL">
+                    <div class="lab-title">Inventaris TRPL</div>
+                    <div class="polinela-mark">POLINELA</div>
+                </div>
                 <div class="nama-barang">{{ $barang->nama_barang }}</div>
                 <div class="qr-img">
                     {!! QrCode::size(68)->generate(url('/scan-barang/' . $barang->barcode)) !!}
