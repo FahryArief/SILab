@@ -3,7 +3,7 @@
         Dashboard Mahasiswa
     </x-slot>
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-8">
 
         <div class="bg-indigo-600 rounded-lg p-8 shadow-md text-white flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
             <div class="relative z-10">
@@ -29,6 +29,14 @@
                         <div class="text-sm text-amber-900">
                             <p class="font-bold">Ada pengajuan yang masih diproses.</p>
                             <p class="mt-1">{{ $peminjaman_menunggu }} peminjaman dan {{ $booking_menunggu }} booking ruangan menunggu tindak lanjut.</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @if($peminjaman_menunggu > 0)
+                                    <a href="{{ route('peminjam.riwayat') }}" class="font-bold underline">Lihat peminjaman</a>
+                                @endif
+                                @if($booking_menunggu > 0)
+                                    <a href="{{ route('peminjam.riwayat') }}" class="font-bold underline">Lihat booking ruangan</a>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -37,7 +45,7 @@
                         <span class="text-xl">❗</span>
                         <div class="text-sm text-red-900">
                             <p class="font-bold">Ada {{ $peminjaman_ditolak->count() }} pengajuan peminjaman yang ditolak.</p>
-                            <a href="{{ route('peminjam.riwayat') }}" class="inline-block mt-2 font-bold underline">Lihat detail riwayat</a>
+                            <a href="{{ route('peminjam.riwayat') }}" class="inline-block mt-3 font-bold underline">Lihat detail peminjaman</a>
                         </div>
                     </div>
                 @endif
@@ -48,6 +56,7 @@
                     <div class="text-sm text-red-800">
                         <p class="font-bold">Ada {{ $peminjaman_terlambat }} peminjaman yang melewati tenggat.</p>
                         <p class="mt-1">Segera kembalikan barang dan hubungi laboratorium bila membutuhkan bantuan.</p>
+                        <a href="{{ route('peminjam.riwayat') }}" class="inline-block mt-3 font-bold underline">Lihat detail peminjaman alat</a>
                     </div>
                 </div>
             @endif

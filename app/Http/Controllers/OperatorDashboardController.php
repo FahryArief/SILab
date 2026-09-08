@@ -22,7 +22,7 @@ class OperatorDashboardController extends Controller
         $peminjaman_pending = Peminjaman::where('status', 'pending')->count();
         $total_pending = $booking_pending + $peminjaman_pending;
         $peminjaman_terlambat = Peminjaman::where('status', 'disetujui')
-            ->whereDate('tanggal_kembali', '<', now()->toDateString())
+            ->whereDate('tanggal_kembali', '<', today()->toDateString())
             ->count();
         $audit_perlu_dikerjakan = AuditPeriode::whereIn('status', ['open', 'revisi'])->count();
 

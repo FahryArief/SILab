@@ -29,7 +29,7 @@ class UserDashboardController extends Controller
         $tanggungan_barang = Peminjaman::where('user_id', $user_id)->where('status', 'disetujui')->count();
         $peminjaman_terlambat = Peminjaman::where('user_id', $user_id)
             ->where('status', 'disetujui')
-            ->whereDate('tanggal_kembali', '<', now()->toDateString())
+            ->whereDate('tanggal_kembali', '<', today()->toDateString())
             ->count();
         $peminjaman_menunggu = Peminjaman::where('user_id', $user_id)
             ->whereIn('status', ['pending', 'divalidasi_teknisi'])
