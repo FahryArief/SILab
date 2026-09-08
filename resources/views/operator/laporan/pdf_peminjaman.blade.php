@@ -22,10 +22,9 @@
         .kop-brand .brand-left, .kop-brand .brand-right { width: 15%; }
         .kop-brand .brand-left { text-align: left; }
         .kop-brand .brand-right { text-align: right; }
-        .kop-brand .brand-copy { width: 70%; text-align: center; }
-        .kop-brand img { width: 52px; height: 52px; object-fit: contain; }
-        .polinela-logo { color: #123b78; font-size: 12px; font-weight: bold; line-height: 1; }
-        .kop-surat h1 { margin: 0; font-size: 18px; text-transform: uppercase; font-weight: bold; }
+        .kop-brand .brand-copy { width: 100%; text-align: center; }
+        .kop-brand img { width: 90px; height: 90px; object-fit: contain; }
+        .kop-surat h1 { margin: 0; font-size: 16px; text-transform: uppercase; font-weight: bold; }
         .kop-surat h2 { margin: 0; font-size: 16px; font-weight: normal; }
         .kop-surat p { margin: 2px 0 0 0; font-size: 11px; font-style: italic; }
 
@@ -61,11 +60,11 @@
 
     <div class="kop-surat">
         <table class="kop-brand"><tr>
-            <td class="brand-left"><span class="polinela-logo">POLINELA</span></td>
+            <td class="brand-left"><img src="{{ public_path('images/polinela.png') }}" alt="Logo POLINELA"></td>
             <td class="brand-copy">
-                <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
+                <h1>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h1>
                 <h1>POLITEKNIK NEGERI LAMPUNG</h1>
-                <h2>PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK</h2>
+                <h1>PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK</h1>
                 <p>Jl. Soekarno Hatta No.10, Rajabasa, Kec. Rajabasa, Kota Bandar Lampung, Lampung 31414</p>
             </td>
             <td class="brand-right"><img src="{{ public_path('images/trpl.png') }}" alt="Logo TRPL"></td>
@@ -111,8 +110,8 @@
 
     <div class="ttd-container clearfix">
         <div class="ttd-box">
-            <p>Bandar Lampung, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>Kepala Laboratorium TRPL</p>
-            <strong>Dani Rofianto, S.Mat., M.Kom.</strong><br>
+            <p>Bandar Lampung, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>Kepala Laboratorium</p>
+            <strong><u>Dani Rofianto, S.Mat., M.Kom.</u></strong><br>
             NIP. 199311262022031005
         </div>
     </div>
