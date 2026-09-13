@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
 use App\Support\Role;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
