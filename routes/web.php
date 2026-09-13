@@ -226,7 +226,6 @@ Route::middleware(['auth', 'role:peminjam'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Authorized document download endpoints
     Route::get('/surat-peminjaman/{id}/download', [PeminjamanController::class, 'downloadSurat'])->name('peminjaman.download-surat');
