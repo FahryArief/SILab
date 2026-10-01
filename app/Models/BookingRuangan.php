@@ -26,8 +26,10 @@ class BookingRuangan extends Model
     }
 
     // Relasi ke tabel Ruangan
+    // withTrashed(): histori booking tetap bisa menampilkan nama ruangan
+    // meski ruangannya sudah dinonaktifkan belakangan.
     public function ruangan()
     {
-        return $this->belongsTo(Ruangan::class);
+        return $this->belongsTo(Ruangan::class)->withTrashed();
     }
 }

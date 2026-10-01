@@ -21,7 +21,10 @@ class LaporanController extends Controller
 
         // ========== STATISTIK RINGKASAN ==========
         $totalBarang = Barang::count();
-        $totalRuangan = Ruangan::count();
+        // Hitung ruangan yang aktif pada tahun yang difilter (termasuk ruangan
+        // yang sudah dinonaktifkan tapi masih aktif di tahun tsb), bukan cuma
+        // ruangan yang aktif sekarang — supaya statistik historis konsisten.
+        $totalRuangan = Ruangan::aktifPadaTahun($tahunIni)->count();
         $totalPeminjaman = Peminjaman::whereYear('tanggal_pinjam', $tahunIni)->count();
         $totalBooking = BookingRuangan::whereYear('tanggal_booking', $tahunIni)->count();
 
@@ -133,14 +136,24 @@ class LaporanController extends Controller
 
     /**
      * Export PDF: Laporan Data Ruangan
+     *
+     * Bisa difilter per tahun (?tahun=2024) — akan menampilkan ruangan yang
+     * aktif di tahun itu, termasuk ruangan yang sekarang sudah dinonaktifkan
+     * tapi dulu masih dipakai. Berguna untuk laporan historis (akreditasi),
+     * supaya kondisi tiap tahun tetap bisa ditunjukkan apa adanya.
      */
-    public function cetakRuangan()
+    public function cetakRuangan(Request $request)
     {
-        $ruangans = Ruangan::withCount('barangs')->orderBy('nama_ruangan')->get();
+        $tahun = $request->input('tahun', date('Y'));
 
-        $pdf = Pdf::loadView('operator.laporan.pdf_ruangan', compact('ruangans'));
+        $ruangans = Ruangan::aktifPadaTahun($tahun)
+            ->withCount('barangs')
+            ->orderBy('nama_ruangan')
+            ->get();
 
-        return $pdf->stream('Laporan_Data_Ruangan_'.date('Y-m-d').'.pdf');
+        $pdf = Pdf::loadView('operator.laporan.pdf_ruangan', compact('ruangans', 'tahun'));
+
+        return $pdf->stream('Laporan_Data_Ruangan_'.$tahun.'.pdf');
     }
 
     /**

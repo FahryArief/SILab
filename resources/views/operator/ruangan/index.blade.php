@@ -120,7 +120,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-4 border-t border-gray-100 bg-gray-50/50">
+                <div class="grid grid-cols-5 border-t border-gray-100 bg-gray-50/50">
                     @if($ruangan->kode_ruangan)
                     <a href="{{ route('ruangan.qrcode', $ruangan->id) }}" target="_blank" class="py-3 text-center text-xs font-bold text-teal-600 hover:bg-white transition-colors border-r border-gray-100">
                         🖨️ QR
@@ -135,9 +135,16 @@
                     <a href="{{ route('admin.jadwal_kuliah.ruangan', $ruangan->id) }}" class="py-3 text-center text-xs font-bold text-gray-600 hover:bg-white transition-colors border-r border-gray-100">
                         JADWAL
                     </a>
-                    <a href="{{ route('ruangan.edit', $ruangan->id) }}" class="py-3 text-center text-xs font-bold text-indigo-600 hover:bg-white transition-colors">
+                    <a href="{{ route('ruangan.edit', $ruangan->id) }}" class="py-3 text-center text-xs font-bold text-indigo-600 hover:bg-white transition-colors border-r border-gray-100">
                         EDIT
                     </a>
+                    <form action="{{ route('ruangan.destroy', $ruangan->id) }}" method="POST"
+                          onsubmit="return confirm('Nonaktifkan ruangan ini? Ruangan tidak akan terlihat di halaman ini atau bisa dipilih untuk data baru, tapi datanya tetap tersimpan dan akan tetap tampil di laporan tahun-tahun sebelumnya. Bisa diaktifkan lagi kapan saja lewat menu Arsip di bawah.')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="w-full h-full py-3 text-center text-xs font-bold text-red-500 hover:bg-white transition-colors">
+                            NONAKTIFKAN
+                        </button>
+                    </form>
                 </div>
             </div>
             @endforeach
@@ -146,6 +153,45 @@
     <div class="mt-6">
         {{ $ruangans->links() }}
     </div>
+
+    {{-- Arsip: Ruangan Nonaktif --}}
+    @if($ruangansArsip->isNotEmpty())
+    <div class="max-w-7xl mx-auto mt-8" x-data="{ open: false }">
+        <button type="button" @click="open = !open" class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-700 mb-3">
+            <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            Arsip Ruangan Nonaktif ({{ $ruangansArsip->count() }})
+        </button>
+        <div x-show="open" x-transition class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Nama Ruangan</th>
+                        <th class="px-4 py-3 font-semibold">Lokasi</th>
+                        <th class="px-4 py-3 font-semibold">Dinonaktifkan Sejak</th>
+                        <th class="px-4 py-3 font-semibold text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($ruangansArsip as $arsip)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-bold text-gray-700">{{ $arsip->nama_ruangan }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ $arsip->lokasi ?? '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ $arsip->deleted_at?->translatedFormat('d F Y') }}</td>
+                        <td class="px-4 py-3 text-right">
+                            <form action="{{ route('ruangan.restore', $arsip->id) }}" method="POST" onsubmit="return confirm('Aktifkan kembali ruangan ini?')">
+                                @csrf @method('PATCH')
+                                <button type="submit" class="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded text-xs font-bold transition">
+                                    Aktifkan Kembali
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     <!-- Modal Import -->
     <div id="importModalRuangan" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">

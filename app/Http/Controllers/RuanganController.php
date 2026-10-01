@@ -21,7 +21,13 @@ class RuanganController extends Controller
             'id', 'nama_ruangan', 'kode_ruangan', 'kapasitas', 'lokasi',
             'keterangan', 'fasilitas', 'foto_ruangan', 'terakhir_diperiksa_at',
         ])->latest()->paginate(18)->withQueryString();
-        return view('operator.ruangan.index', compact('ruangans'));
+
+        // Arsip: ruangan yang sudah dinonaktifkan (soft deleted), tetap bisa
+        // dilihat & diaktifkan kembali di sini. Tidak ikut tampil di listing
+        // utama ataupun di dropdown pemilihan ruangan manapun.
+        $ruangansArsip = Ruangan::onlyTrashed()->orderByDesc('deleted_at')->get();
+
+        return view('operator.ruangan.index', compact('ruangans', 'ruangansArsip'));
     }
 
     public function create()
@@ -94,17 +100,32 @@ class RuanganController extends Controller
         return redirect()->route('ruangan.index')->with('success', 'Data ruangan berhasil diperbarui!');
     }
 
+    /**
+     * Nonaktifkan ruangan (soft delete).
+     *
+     * Baris datanya TIDAK dihapus dari database — hanya ditandai nonaktif
+     * (deleted_at diisi) supaya hilang dari halaman Data Ruangan & dropdown
+     * pemilihan ruangan, tapi tetap muncul di laporan historis kalau
+     * difilter ke tahun saat ruangan itu masih aktif. Foto juga tidak
+     * dihapus, sama alasannya (dipakai untuk laporan lama).
+     */
     public function destroy($id)
     {
         $ruangan = Ruangan::findOrFail($id);
 
-        // Hapus file foto dari server jika ada
-        if ($ruangan->foto_ruangan && Storage::disk('public')->exists('foto_ruangan/' . $ruangan->foto_ruangan)) {
-            Storage::disk('public')->delete('foto_ruangan/' . $ruangan->foto_ruangan);
-        }
-
         $ruangan->delete();
-        return redirect()->back()->with('success', 'Ruangan berhasil dihapus!');
+        return redirect()->back()->with('success', 'Ruangan dinonaktifkan. Data tetap tersimpan dan akan tetap muncul di laporan tahun-tahun sebelumnya.');
+    }
+
+    /**
+     * Aktifkan kembali ruangan yang sebelumnya dinonaktifkan.
+     */
+    public function restore($id)
+    {
+        $ruangan = Ruangan::onlyTrashed()->findOrFail($id);
+        $ruangan->restore();
+
+        return redirect()->back()->with('success', 'Ruangan "' . $ruangan->nama_ruangan . '" berhasil diaktifkan kembali.');
     }
 
     public function export()

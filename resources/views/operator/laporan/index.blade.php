@@ -32,11 +32,11 @@
                             <div class="text-[10px] text-gray-400">Seluruh inventaris barang</div>
                         </div>
                     </a>
-                    <a href="{{ route('laporan.ruangan') }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 transition-colors border-b border-gray-100">
+                    <a href="{{ route('laporan.ruangan', ['tahun' => $tahunIni]) }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 transition-colors border-b border-gray-100">
                         <span class="text-lg mr-3">🏠</span>
                         <div>
                             <div class="font-bold text-xs">Laporan Data Ruangan</div>
-                            <div class="text-[10px] text-gray-400">Seluruh data ruangan lab</div>
+                            <div class="text-[10px] text-gray-400">Kondisi ruangan di tahun {{ $tahunIni }} (termasuk yang sudah nonaktif)</div>
                         </div>
                     </a>
                     <button @click="exportOpen = false; document.getElementById('exportPeminjamanModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 transition-colors w-full text-left border-b border-gray-100">

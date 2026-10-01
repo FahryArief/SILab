@@ -87,6 +87,7 @@ Route::delete('/operator/barang-batch/destroy', [BarangController::class, 'bulkD
     // ... (rute resource kategori, ruangan, barang biarkan di bawahnya) ...
     Route::resource('operator/kategori', KategoriController::class);
     Route::resource('operator/ruangan', RuanganController::class);
+    Route::patch('/operator/ruangan/{id}/restore', [RuanganController::class, 'restore'])->name('ruangan.restore');
     Route::resource('operator/barang', BarangController::class);
     Route::patch('/operator/barang/{id}/inline', [BarangController::class, 'inlineUpdate'])->name('barang.inline-update');
 

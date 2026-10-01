@@ -21,7 +21,7 @@ class JadwalKuliah extends Model
 
     public function ruangan()
     {
-        return $this->belongsTo(Ruangan::class);
+        return $this->belongsTo(Ruangan::class)->withTrashed();
     }
 
     public function tahunAjaran()

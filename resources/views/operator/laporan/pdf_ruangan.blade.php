@@ -49,13 +49,14 @@
     </div>
 
     <div class="judul">
-        <h3>LAPORAN DATA RUANGAN LABORATORIUM</h3>
+        <h3>LAPORAN DATA RUANGAN LABORATORIUM — TAHUN {{ $tahun }}</h3>
         <p>Dicetak pada: {{ \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') }} WIB</p>
     </div>
 
     <div class="ringkasan">
         <table>
-            <tr><td>Total Ruangan</td><td>: {{ $ruangans->count() }} ruangan</td></tr>
+            <tr><td>Tahun Laporan</td><td>: {{ $tahun }}</td></tr>
+            <tr><td>Total Ruangan Aktif di Tahun Ini</td><td>: {{ $ruangans->count() }} ruangan</td></tr>
             <tr><td>Total Kapasitas</td><td>: {{ $ruangans->sum('kapasitas') }} orang</td></tr>
         </table>
     </div>
@@ -64,13 +65,14 @@
         <thead>
             <tr>
                 <th width="5%">No</th>
-                <th width="10%">Kode</th>
-                <th width="18%">Nama Ruangan</th>
-                <th width="12%">Lokasi</th>
-                <th width="8%">Kapasitas</th>
-                <th width="25%">Fasilitas</th>
-                <th width="12%">Jumlah Data Barang Disimpan di Ruangan</th>
-                <th width="15%">Keterangan</th>
+                <th width="9%">Kode</th>
+                <th width="15%">Nama Ruangan</th>
+                <th width="10%">Lokasi</th>
+                <th width="7%">Kapasitas</th>
+                <th width="20%">Fasilitas</th>
+                <th width="10%">Jumlah Data Barang Disimpan di Ruangan</th>
+                <th width="12%">Keterangan</th>
+                <th width="12%">Status Tahun {{ $tahun }}</th>
             </tr>
         </thead>
         <tbody>
@@ -84,9 +86,16 @@
                 <td>{{ $ruangan->fasilitas ?? '-' }}</td>
                 <td class="text-center">{{ $ruangan->barangs_count ?? 0 }}</td>
                 <td>{{ $ruangan->keterangan ?? '-' }}</td>
+                <td class="text-center">
+                    @if($ruangan->trashed())
+                        Nonaktif sejak {{ $ruangan->deleted_at->translatedFormat('d M Y') }}
+                    @else
+                        Aktif
+                    @endif
+                </td>
             </tr>
             @empty
-            <tr><td colspan="8" class="text-center">Tidak ada data ruangan.</td></tr>
+            <tr><td colspan="9" class="text-center">Tidak ada data ruangan untuk tahun {{ $tahun }}.</td></tr>
             @endforelse
         </tbody>
     </table>

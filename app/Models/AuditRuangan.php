@@ -34,7 +34,9 @@ class AuditRuangan extends Model
 
     public function ruangan()
     {
-        return $this->belongsTo(Ruangan::class);
+        // withTrashed(): hasil audit lama tetap terhubung ke ruangan meski
+        // ruangan itu sudah dinonaktifkan setelah periode audit berjalan.
+        return $this->belongsTo(Ruangan::class)->withTrashed();
     }
 
     public function tahunAjaran()

@@ -28,9 +28,11 @@ class Barang extends Model
     }
 
     // Relasi ke Ruangan (Opsional tapi baik ditambahkan sekarang)
+    // withTrashed(): barang yang ruangannya sudah dinonaktifkan tetap bisa
+    // menampilkan nama ruangan aslinya (untuk histori/laporan).
     public function ruangan()
     {
-        return $this->belongsTo(Ruangan::class);
+        return $this->belongsTo(Ruangan::class)->withTrashed();
     }
 
     // Relasi ke Peminjaman (Many to Many)
