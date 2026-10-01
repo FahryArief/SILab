@@ -18,10 +18,13 @@ class Ruangan extends Model
         'lokasi',
         'kode_ruangan',
         'terakhir_diperiksa_at',
+        'jenis_ruangan',
+        'lab_nonaktif_sejak',
     ];
 
     protected $casts = [
         'deleted_at' => 'datetime',
+        'lab_nonaktif_sejak' => 'date',
     ];
 
     public function getStatusLabelAttribute()
@@ -30,19 +33,26 @@ class Ruangan extends Model
             return 'Nonaktif';
         }
 
+        if ($this->jenis_ruangan && $this->jenis_ruangan !== 'Lab') {
+            return $this->jenis_ruangan; // mis. "Kelas"
+        }
+
         // Logika sederhana: untuk sementara kita buat default 'Tersedia'
         // Kedepannya ini akan mengecek ke tabel booking_ruangans
         return 'Tersedia';
     }
 
     /**
-     * Ruangan dianggap "aktif pada tahun X" jika:
-     * - sudah ada sejak tahun itu (created_at <= tahun), dan
-     * - belum dinonaktifkan, atau baru dinonaktifkan di tahun itu/setelahnya.
+     * Ruangan dianggap "aktif sebagai LAB pada tahun X" jika:
+     * - sudah ada sejak tahun itu (created_at <= tahun),
+     * - belum diarsipkan/dihapus, atau baru diarsipkan di tahun itu/setelahnya,
+     * - dan belum beralih fungsi dari Lab, atau baru beralih fungsi di tahun
+     *   itu/setelahnya (mis. ruangan yang jadi kelas biasa mulai tahun 2025
+     *   tetap dihitung sebagai lab untuk laporan tahun 2024 dan 2025).
      *
      * Dipakai untuk laporan historis (akreditasi dll) supaya ruangan yang
-     * sudah dinonaktifkan tetap tampil kalau laporan difilter ke tahun saat
-     * ruangan itu masih aktif.
+     * sudah dinonaktifkan/dialihfungsikan tetap tampil kalau laporan
+     * difilter ke tahun saat ruangan itu masih berfungsi sebagai lab.
      */
     public function scopeAktifPadaTahun($query, $tahun)
     {
@@ -51,6 +61,10 @@ class Ruangan extends Model
             ->where(function ($q) use ($tahun) {
                 $q->whereNull('deleted_at')
                   ->orWhereYear('deleted_at', '>=', $tahun);
+            })
+            ->where(function ($q) use ($tahun) {
+                $q->whereNull('lab_nonaktif_sejak')
+                  ->orWhereYear('lab_nonaktif_sejak', '>=', $tahun);
             });
     }
 

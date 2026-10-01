@@ -93,7 +93,9 @@ class RuanganController extends Controller
                 'lokasi'       => $request->lokasi,
                 'keterangan'   => $request->keterangan,
                 'fasilitas'    => $request->fasilitas,
-                'foto_ruangan' => $nama_foto
+                'foto_ruangan' => $nama_foto,
+                'jenis_ruangan' => $request->jenis_ruangan ?: $ruangan->jenis_ruangan,
+                'lab_nonaktif_sejak' => $request->lab_nonaktif_sejak,
             ]);
         });
 

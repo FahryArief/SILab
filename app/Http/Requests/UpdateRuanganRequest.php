@@ -19,7 +19,9 @@ class UpdateRuanganRequest extends FormRequest
             'lokasi'       => 'nullable|string|max:255',
             'keterangan'   => 'nullable|string',
             'fasilitas'    => 'nullable|string',
-            'foto_ruangan' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'foto_ruangan' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'jenis_ruangan' => 'nullable|string|in:Lab,Kelas,Lainnya',
+            'lab_nonaktif_sejak' => 'nullable|date',
         ];
     }
 }

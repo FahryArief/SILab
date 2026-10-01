@@ -71,7 +71,7 @@
                 <th width="7%">Kapasitas</th>
                 <th width="20%">Fasilitas</th>
                 <th width="10%">Jumlah Data Barang Disimpan di Ruangan</th>
-                <th width="12%">Keterangan</th>
+                <th width="10%">Keterangan</th>
                 <th width="12%">Status Tahun {{ $tahun }}</th>
             </tr>
         </thead>
@@ -89,8 +89,10 @@
                 <td class="text-center">
                     @if($ruangan->trashed())
                         Nonaktif sejak {{ $ruangan->deleted_at->translatedFormat('d M Y') }}
+                    @elseif($ruangan->lab_nonaktif_sejak)
+                        Lab s.d. {{ $ruangan->lab_nonaktif_sejak->translatedFormat('M Y') }}
                     @else
-                        Aktif
+                        Aktif sebagai Lab
                     @endif
                 </td>
             </tr>
