@@ -3,7 +3,7 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <div class="max-w-7xl mx-auto" x-data="{
+    <div id="barangTableContainer" class="max-w-7xl mx-auto" x-data="{
         search: '',
         filterKategori: '',
         filterRuangan: '',
@@ -14,6 +14,37 @@
             const i = this.selectedIds.indexOf(id);
             if (i === -1) this.selectedIds.push(id);
             else this.selectedIds.splice(i, 1);
+        },
+        itemMatches(el) {
+            const kategori = el.dataset.kategori || '';
+            const ruangan = el.dataset.ruangan || '';
+            const status = el.dataset.status || '';
+            const searchText = (el.dataset.search || '').toLowerCase();
+            const matchSearch = !this.search || searchText.includes(this.search.toLowerCase());
+            const matchKategori = !this.filterKategori || kategori === this.filterKategori;
+            const matchRuangan = !this.filterRuangan || ruangan.includes(this.filterRuangan);
+            const matchStatus = !this.filterStatus || status.includes(this.filterStatus);
+            return matchSearch && matchKategori && matchRuangan && matchStatus;
+        },
+        getMatchingCheckboxes() {
+            return Array.from(document.querySelectorAll('#barangTableContainer input[type=checkbox][data-id]'))
+                        .filter(cb => this.itemMatches(cb));
+        },
+        toggleSelectAll(checked) {
+            const matching = this.getMatchingCheckboxes();
+            if (checked) {
+                matching.forEach(cb => {
+                    const id = parseInt(cb.dataset.id, 10);
+                    if (!this.selectedIds.includes(id)) this.selectedIds.push(id);
+                });
+            } else {
+                const ids = matching.map(cb => parseInt(cb.dataset.id, 10));
+                this.selectedIds = this.selectedIds.filter(id => !ids.includes(id));
+            }
+        },
+        get allMatchingSelected() {
+            const matching = this.getMatchingCheckboxes();
+            return matching.length > 0 && matching.every(cb => this.selectedIds.includes(parseInt(cb.dataset.id, 10)));
         },
         isVisible(el) {
             const nama = el.dataset.nama || '';
@@ -104,6 +135,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Cetak QR Label
                 </button>
+                <button @click="toggleSelectAll(!allMatchingSelected)" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-1.5" x-text="allMatchingSelected ? 'Batalkan Semua' : 'Pilih Semua Hasil Filter'"></button>
                 <button @click="selectedIds = []" class="text-xs text-gray-500 hover:text-gray-800 font-semibold px-3 py-1.5">Batal Pilih</button>
             </div>
         </div>
@@ -121,7 +153,10 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                     <tr>
-                        <th class="px-3 py-3 font-semibold w-8"></th>
+                        <th class="px-3 py-3 font-semibold w-8 text-center">
+                            <input type="checkbox" :checked="allMatchingSelected" @change="toggleSelectAll($event.target.checked)"
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" title="Pilih Semua">
+                        </th>
                         <th class="px-3 py-3 font-semibold w-8"></th>
                         <th class="px-3 py-3 font-semibold">Nama Barang</th>
                         <th class="px-3 py-3 font-semibold">Kategori</th>
@@ -196,7 +231,13 @@
                         x-transition.opacity class="bg-slate-50/50 hover:bg-slate-100/80 transition-colors" id="row-{{ $barang->id }}">
                             {{-- Checkbox --}}
                         <td class="px-3 py-2 text-center" @click.stop>
-                            <input type="checkbox" :checked="selectedIds.includes({{ $barang->id }})" @change="toggleSelect({{ $barang->id }})"
+                            <input type="checkbox"
+                                   data-id="{{ $barang->id }}"
+                                   data-kategori="{{ $barang->kategori->nama_kategori ?? '' }}"
+                                   data-ruangan="{{ $barang->ruangan->nama_ruangan ?? '' }}"
+                                   data-status="{{ $barang->status_peminjaman }}"
+                                   data-search="{{ $nama_barang }} {{ $barang->barcode }} {{ $barang->merk }}"
+                                   :checked="selectedIds.includes({{ $barang->id }})" @change="toggleSelect({{ $barang->id }})"
                                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer">
                         </td>
                         {{-- Arrow --}}
