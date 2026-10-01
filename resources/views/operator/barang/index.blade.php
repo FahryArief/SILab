@@ -62,6 +62,31 @@
         batchPrintSelected() {
             if (this.selectedIds.length === 0) { alert('Pilih minimal 1 item terlebih dahulu.'); return; }
             window.open('/operator/barang-batch/barcode?ids=' + this.selectedIds.join(','), '_blank');
+        },
+        bulkDeleteSelected() {
+            if (this.selectedIds.length === 0) { alert('Pilih minimal 1 item terlebih dahulu.'); return; }
+            if (!confirm(`Hapus ${this.selectedIds.length} barang terpilih? Barang dengan riwayat peminjaman akan dilewati. Tindakan ini tidak bisa dibatalkan.`)) return;
+
+            fetch('{{ route('barang.bulk-destroy') }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: this.selectedIds })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    showToast(res.message);
+                    this.selectedIds = [];
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    showToast(res.message || 'Gagal menghapus data.', true);
+                }
+            })
+            .catch(() => showToast('Gagal menghapus data.', true));
         }
     }">
         {{-- Flash --}}
@@ -134,6 +159,10 @@
                 <button @click="batchPrintSelected()" class="bg-indigo-600 text-white px-4 py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700 transition flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Cetak QR Label
+                </button>
+                <button @click="bulkDeleteSelected()" class="bg-red-600 text-white px-4 py-1.5 rounded-md text-xs font-bold hover:bg-red-700 transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Hapus Massal
                 </button>
                 <button @click="toggleSelectAll(!allMatchingSelected)" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-1.5" x-text="allMatchingSelected ? 'Batalkan Semua' : 'Pilih Semua Hasil Filter'"></button>
                 <button @click="selectedIds = []" class="text-xs text-gray-500 hover:text-gray-800 font-semibold px-3 py-1.5">Batal Pilih</button>

@@ -177,6 +177,67 @@ class BarangController extends Controller
         return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus!');
     }
 
+    /**
+     * Hapus massal (AJAX) — hapus beberapa barang sekaligus berdasarkan daftar ID.
+     * Barang yang punya riwayat peminjaman akan dilewati, tidak ikut terhapus.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $ids))));
+
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada barang yang dipilih.',
+            ], 422);
+        }
+
+        $barangs = Barang::whereIn('id', $ids)->get();
+
+        $deleted = 0;
+        $skipped = [];
+
+        DB::transaction(function () use ($barangs, &$deleted, &$skipped) {
+            foreach ($barangs as $barang) {
+                if ($barang->peminjamans()->count() > 0) {
+                    $skipped[] = $barang->barcode ?? ('#' . $barang->id);
+                    continue;
+                }
+
+                if ($barang->foto_barang && Storage::disk('public')->exists('foto_barang/' . $barang->foto_barang)) {
+                    $othersUsingPhoto = Barang::where('foto_barang', $barang->foto_barang)
+                        ->where('id', '!=', $barang->id)
+                        ->count();
+                    if ($othersUsingPhoto === 0) {
+                        Storage::disk('public')->delete('foto_barang/' . $barang->foto_barang);
+                    }
+                }
+
+                $barang->delete();
+                $deleted++;
+            }
+        });
+
+        $message = $deleted > 0
+            ? "{$deleted} barang berhasil dihapus."
+            : 'Tidak ada barang yang berhasil dihapus.';
+
+        if (!empty($skipped)) {
+            $message .= ' ' . count($skipped) . ' barang dilewati karena memiliki riwayat peminjaman (' . implode(', ', $skipped) . ').';
+        }
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'skipped' => $skipped,
+            'message' => $message,
+        ]);
+    }
+
     public function export()
     {
         return Excel::download(new BarangExport, 'Data_Barang_'.date('Ymd_His').'.xlsx');
