@@ -117,8 +117,8 @@
                                 @forelse($recent_peminjamans as $pinjam)
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $pinjam->barangs->pluck('nama_barang')->unique()->implode(', ') ?: 'Barang Dihapus' }}</div>
-                                        <div class="text-sm text-gray-500">Oleh: {{ $pinjam->nama_peminjam ?? ($pinjam->user->name ?? 'User Dihapus') }} ({{ $pinjam->barangs->count() }} item)</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $pinjam->barang_items->pluck('nama_barang')->unique()->implode(', ') ?: 'Barang Dihapus' }}</div>
+                                        <div class="text-sm text-gray-500">Oleh: {{ $pinjam->nama_peminjam ?? ($pinjam->user->name ?? 'User Dihapus') }} ({{ $pinjam->barang_items->count() }} item)</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         @if($pinjam->status == 'pending')

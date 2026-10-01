@@ -100,7 +100,7 @@
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="text-sm font-bold text-gray-800">{{ $pinjam->user ? $pinjam->user->name : $pinjam->nama_peminjam }}</p>
-                                        <p class="text-xs text-gray-500">{{ $pinjam->barangs->count() }} item: {{ $pinjam->barangs->pluck('barcode')->implode(', ') }}</p>
+                                        <p class="text-xs text-gray-500">{{ $pinjam->barang_items->count() }} item: {{ $pinjam->barang_items->pluck('barcode')->implode(', ') }}</p>
                                         <p class="text-[10px] text-gray-400 mt-1">{{ $pinjam->created_at->diffForHumans() }}</p>
                                     </div>
                                     <div>

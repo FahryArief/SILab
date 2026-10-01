@@ -149,13 +149,13 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <p class="text-sm font-bold text-gray-800">{{ $pinjam->user ? $pinjam->user->name : $pinjam->nama_peminjam }}</p>
-                                            <p class="text-xs text-gray-500 mt-0.5">{{ $pinjam->barangs->count() }} item: {{ $pinjam->barangs->pluck('nama_barang')->unique()->implode(', ') }}</p>
+                                            <p class="text-xs text-gray-500 mt-0.5">{{ $pinjam->barang_items->count() }} item: {{ $pinjam->barang_items->pluck('nama_barang')->unique()->implode(', ') }}</p>
                                             <div class="flex gap-1 mt-1.5 flex-wrap">
-                                                @foreach($pinjam->barangs->take(3) as $brg)
-                                                    <span class="text-[9px] font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100">{{ $brg->barcode }}</span>
+                                                @foreach($pinjam->barang_items->take(3) as $brg)
+                                                    <span class="text-[9px] font-mono {{ $brg->is_deleted ? 'bg-red-50 text-red-400 border-red-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100' }} px-1.5 py-0.5 rounded border">{{ $brg->barcode }}</span>
                                                 @endforeach
-                                                @if($pinjam->barangs->count() > 3)
-                                                    <span class="text-[9px] text-gray-400">+{{ $pinjam->barangs->count() - 3 }} lainnya</span>
+                                                @if($pinjam->barang_items->count() > 3)
+                                                    <span class="text-[9px] text-gray-400">+{{ $pinjam->barang_items->count() - 3 }} lainnya</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -188,7 +188,7 @@
                                         <div>
                                             <p class="text-sm font-bold text-gray-800">{{ $pinjam->user ? $pinjam->user->name : $pinjam->nama_peminjam }}</p>
                                             <p class="text-xs text-gray-500 mt-0.5">
-                                                {{ $pinjam->barangs->count() }} item &bull;
+                                                {{ $pinjam->barang_items->count() }} item &bull;
                                                 Kembali: {{ \Carbon\Carbon::parse($pinjam->tanggal_kembali)->format('d M Y') }}
                                             </p>
                                         </div>

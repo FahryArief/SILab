@@ -164,17 +164,57 @@ class BarangController extends Controller
     {
         $barang = Barang::findOrFail($id);
 
-        if ($barang->peminjamans()->count() > 0) {
-            return redirect()->route('barang.index')->with('error', 'Barang tidak dapat dihapus karena memiliki riwayat peminjaman. Ubah statusnya jika sudah tidak digunakan.');
+        // Cek apakah barang sedang dipinjam (status aktif)
+        $sedangDipinjam = $barang->peminjamans()
+            ->whereIn('status', ['pending', 'disetujui'])
+            ->count();
+
+        if ($sedangDipinjam > 0) {
+            return redirect()->route('barang.index')->with('error', 'Barang tidak dapat dihapus karena sedang dalam proses peminjaman aktif.');
         }
 
-        // Hapus foto jika ada
-        if ($barang->foto_barang && Storage::disk('public')->exists('foto_barang/' . $barang->foto_barang)) {
-            Storage::disk('public')->delete('foto_barang/' . $barang->foto_barang);
-        }
+        DB::transaction(function () use ($barang) {
+            // Isi snapshot yang masih kosong di peminjaman_barangs
+            DB::table('peminjaman_barangs')
+                ->where('barang_id', $barang->id)
+                ->where(function ($q) {
+                    $q->whereNull('nama_barang_snapshot')
+                      ->orWhereNull('barcode_snapshot')
+                      ->orWhereNull('kondisi_snapshot');
+                })
+                ->update([
+                    'nama_barang_snapshot' => DB::raw("COALESCE(nama_barang_snapshot, " . DB::getPdo()->quote($barang->nama_barang) . ")"),
+                    'barcode_snapshot'     => DB::raw("COALESCE(barcode_snapshot, " . DB::getPdo()->quote($barang->barcode) . ")"),
+                    'kondisi_snapshot'     => DB::raw("COALESCE(kondisi_snapshot, " . DB::getPdo()->quote($barang->kondisi) . ")"),
+                ]);
 
-        $barang->delete();
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus!');
+            // Isi snapshot yang masih kosong di audit_barangs
+            DB::table('audit_barangs')
+                ->where('barang_id', $barang->id)
+                ->where(function ($q) {
+                    $q->whereNull('nama_barang_snapshot')
+                      ->orWhereNull('barcode_snapshot')
+                      ->orWhereNull('kondisi_snapshot');
+                })
+                ->update([
+                    'nama_barang_snapshot' => DB::raw("COALESCE(nama_barang_snapshot, " . DB::getPdo()->quote($barang->nama_barang) . ")"),
+                    'barcode_snapshot'     => DB::raw("COALESCE(barcode_snapshot, " . DB::getPdo()->quote($barang->barcode) . ")"),
+                    'kondisi_snapshot'     => DB::raw("COALESCE(kondisi_snapshot, " . DB::getPdo()->quote($barang->kondisi) . ")"),
+                ]);
+
+            // Hapus foto jika tidak digunakan barang lain
+            if ($barang->foto_barang && Storage::disk('public')->exists('foto_barang/' . $barang->foto_barang)) {
+                $othersUsingPhoto = Barang::where('foto_barang', $barang->foto_barang)->where('id', '!=', $barang->id)->count();
+                if ($othersUsingPhoto === 0) {
+                    Storage::disk('public')->delete('foto_barang/' . $barang->foto_barang);
+                }
+            }
+
+            // Hapus barang — FK di peminjaman_barangs & audit_barangs akan di-SET NULL
+            $barang->delete();
+        });
+
+        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus! Riwayat peminjaman tetap tersimpan.');
     }
 
     /**
@@ -203,11 +243,45 @@ class BarangController extends Controller
 
         DB::transaction(function () use ($barangs, &$deleted, &$skipped) {
             foreach ($barangs as $barang) {
-                if ($barang->peminjamans()->count() > 0) {
+                // Hanya blokir jika sedang dalam peminjaman aktif
+                $sedangDipinjam = $barang->peminjamans()
+                    ->whereIn('status', ['pending', 'disetujui'])
+                    ->count();
+
+                if ($sedangDipinjam > 0) {
                     $skipped[] = $barang->barcode ?? ('#' . $barang->id);
                     continue;
                 }
 
+                // Isi snapshot yang masih kosong di peminjaman_barangs
+                DB::table('peminjaman_barangs')
+                    ->where('barang_id', $barang->id)
+                    ->where(function ($q) {
+                        $q->whereNull('nama_barang_snapshot')
+                          ->orWhereNull('barcode_snapshot')
+                          ->orWhereNull('kondisi_snapshot');
+                    })
+                    ->update([
+                        'nama_barang_snapshot' => DB::raw("COALESCE(nama_barang_snapshot, " . DB::getPdo()->quote($barang->nama_barang) . ")"),
+                        'barcode_snapshot'     => DB::raw("COALESCE(barcode_snapshot, " . DB::getPdo()->quote($barang->barcode) . ")"),
+                        'kondisi_snapshot'     => DB::raw("COALESCE(kondisi_snapshot, " . DB::getPdo()->quote($barang->kondisi) . ")"),
+                    ]);
+
+                // Isi snapshot yang masih kosong di audit_barangs
+                DB::table('audit_barangs')
+                    ->where('barang_id', $barang->id)
+                    ->where(function ($q) {
+                        $q->whereNull('nama_barang_snapshot')
+                          ->orWhereNull('barcode_snapshot')
+                          ->orWhereNull('kondisi_snapshot');
+                    })
+                    ->update([
+                        'nama_barang_snapshot' => DB::raw("COALESCE(nama_barang_snapshot, " . DB::getPdo()->quote($barang->nama_barang) . ")"),
+                        'barcode_snapshot'     => DB::raw("COALESCE(barcode_snapshot, " . DB::getPdo()->quote($barang->barcode) . ")"),
+                        'kondisi_snapshot'     => DB::raw("COALESCE(kondisi_snapshot, " . DB::getPdo()->quote($barang->kondisi) . ")"),
+                    ]);
+
+                // Hapus foto jika tidak digunakan barang lain
                 if ($barang->foto_barang && Storage::disk('public')->exists('foto_barang/' . $barang->foto_barang)) {
                     $othersUsingPhoto = Barang::where('foto_barang', $barang->foto_barang)
                         ->where('id', '!=', $barang->id)
@@ -227,7 +301,7 @@ class BarangController extends Controller
             : 'Tidak ada barang yang berhasil dihapus.';
 
         if (!empty($skipped)) {
-            $message .= ' ' . count($skipped) . ' barang dilewati karena memiliki riwayat peminjaman (' . implode(', ', $skipped) . ').';
+            $message .= ' ' . count($skipped) . ' barang dilewati karena sedang dalam peminjaman aktif (' . implode(', ', $skipped) . ').';
         }
 
         return response()->json([

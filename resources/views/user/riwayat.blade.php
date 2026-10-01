@@ -23,13 +23,13 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1">
-                                    @foreach($pinjam->barangs as $brg)
-                                        <span class="text-[10px] font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">{{ $brg->barcode }}</span>
+                                    @foreach($pinjam->barang_items as $brg)
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded border {{ $brg->is_deleted ? 'bg-red-50 text-red-400 border-red-200 line-through' : 'bg-indigo-50 text-indigo-700 border-indigo-100' }}">{{ $brg->barcode }}</span>
                                     @endforeach
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">{{ $pinjam->barangs->pluck('nama_barang')->unique()->implode(', ') }}</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ $pinjam->barang_items->pluck('nama_barang')->unique()->implode(', ') }}</div>
                             </td>
-                            <td class="px-6 py-4 text-center text-sm font-medium text-gray-600">{{ $pinjam->barangs->count() }}</td>
+                            <td class="px-6 py-4 text-center text-sm font-medium text-gray-600">{{ $pinjam->barang_items->count() }}</td>
                             <td class="px-6 py-4 text-xs text-gray-600">
                                 {{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($pinjam->tanggal_kembali)->format('d M Y') }}
                             </td>

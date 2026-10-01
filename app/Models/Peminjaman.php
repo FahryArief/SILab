@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Peminjaman extends Model
 {
@@ -69,5 +70,32 @@ class Peminjaman extends Model
     public function getDikembalikanTerlambatAttribute(): bool
     {
         return $this->status === 'dikembalikan' && $this->hari_terlambat > 0;
+    }
+
+    /**
+     * Ambil data barang untuk tampilan, termasuk yang sudah dihapus.
+     * Menggunakan snapshot dari tabel pivot sebagai fallback.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getBarangItemsAttribute()
+    {
+        // Ambil dari pivot table langsung (termasuk row yang barang_id = NULL)
+        $pivotRows = DB::table('peminjaman_barangs')
+            ->where('peminjaman_id', $this->id)
+            ->get();
+
+        return $pivotRows->map(function ($pivot) {
+            // Coba ambil data barang asli jika masih ada
+            $barang = $pivot->barang_id ? Barang::find($pivot->barang_id) : null;
+
+            return (object) [
+                'id'           => $pivot->barang_id,
+                'nama_barang'  => $barang->nama_barang ?? $pivot->nama_barang_snapshot ?? 'Barang Dihapus',
+                'barcode'      => $barang->barcode ?? $pivot->barcode_snapshot ?? '-',
+                'kondisi'      => $barang->kondisi ?? $pivot->kondisi_snapshot ?? '-',
+                'is_deleted'   => is_null($barang),
+            ];
+        });
     }
 }

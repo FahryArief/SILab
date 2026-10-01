@@ -92,8 +92,8 @@
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
                 <td>{{ $pinjam->user ? $pinjam->user->name : $pinjam->nama_peminjam }}</td>
-                <td>{{ $pinjam->barangs->pluck('barcode')->implode(', ') }}</td>
-                <td class="text-center">{{ $pinjam->barangs->count() }} Item</td>
+                <td>{{ $pinjam->barang_items->pluck('barcode')->implode(', ') }}</td>
+                <td class="text-center">{{ $pinjam->barang_items->count() }} Item</td>
                 <td class="text-center">
                     {{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d/m/Y') }} <br> s/d <br>
                     {{ \Carbon\Carbon::parse($pinjam->tanggal_kembali)->format('d/m/Y') }}

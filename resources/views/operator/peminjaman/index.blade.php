@@ -88,13 +88,13 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1">
-                                    @foreach($pinjam->barangs as $brg)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    @foreach($pinjam->barang_items as $brg)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono {{ $brg->is_deleted ? 'bg-red-50 text-red-400 border border-red-200 line-through' : 'bg-indigo-50 text-indigo-700 border border-indigo-200' }}">
                                             {{ $brg->barcode }}
                                         </span>
                                     @endforeach
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">{{ $pinjam->barangs->count() }} item</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ $pinjam->barang_items->count() }} item</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-xs text-gray-600"><span class="font-bold text-gray-700">Mulai:</span> {{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d M Y') }}</div>

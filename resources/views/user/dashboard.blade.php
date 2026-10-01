@@ -98,8 +98,8 @@
                                        ($pinjam->status == 'disetujui' ? 'bg-emerald-500' : 'bg-gray-300'))) }}"></div>
                                 <div>
                                     <p class="text-sm font-bold text-gray-800">
-                                        Pinjam: {{ $pinjam->barangs->pluck('nama_barang')->unique()->implode(', ') }}
-                                        <span class="text-xs text-gray-400">({{ $pinjam->barangs->count() }} item)</span>
+                                        Pinjam: {{ $pinjam->barang_items->pluck('nama_barang')->unique()->implode(', ') }}
+                                        <span class="text-xs text-gray-400">({{ $pinjam->barang_items->count() }} item)</span>
                                     </p>
                                     <p class="text-[10px] text-gray-500">{{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d M Y') }}</p>
                                 </div>
