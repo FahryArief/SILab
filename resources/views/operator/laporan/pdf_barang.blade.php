@@ -69,13 +69,12 @@
                 <th width="4%">No</th>
                 <th width="12%">Kode</th>
                 <th width="18%">Nama Barang</th>
-                <th width="10%">Merk</th>
-                <th width="12%">Kategori</th>
-                <th width="12%">Ruangan</th>
+                <th width="11%">Merk</th>
+                <th width="13%">Kategori</th>
+                <th width="13%">Ruangan</th>
                 <th width="8%">Pemilik</th>
-                <th width="10%">Kondisi</th>
-                <th width="8%">Status</th>
-                <th width="10%">Harga</th>
+                <th width="11%">Kondisi</th>
+                <th width="10%">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -90,17 +89,12 @@
                 <td class="text-center">{{ $barang->kepemilikan ?? '-' }}</td>
                 <td class="text-center">{{ $barang->kondisi }}</td>
                 <td class="text-center">{{ $barang->status_peminjaman }}</td>
-                <td class="text-right">{{ $barang->harga ? 'Rp ' . number_format($barang->harga, 0, ',', '.') : '-' }}</td>
             </tr>
             @empty
-            <tr><td colspan="10" class="text-center">Tidak ada data barang.</td></tr>
+            <tr><td colspan="9" class="text-center">Tidak ada data barang.</td></tr>
             @endforelse
         </tbody>
     </table>
-
-    @if($barangs->sum('harga') > 0)
-    <p style="text-align: right; font-weight: bold;">Total Nilai Aset: Rp {{ number_format($barangs->sum('harga'), 0, ',', '.') }}</p>
-    @endif
 
     <div class="ttd-container clearfix">
         <div class="ttd-box">

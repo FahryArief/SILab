@@ -65,12 +65,11 @@
         <thead>
             <tr>
                 <th width="5%">No</th>
-                <th width="9%">Kode</th>
-                <th width="15%">Nama Ruangan</th>
-                <th width="10%">Lokasi</th>
-                <th width="7%">Kapasitas</th>
-                <th width="20%">Fasilitas</th>
-                <th width="10%">Jumlah Data Barang Disimpan di Ruangan</th>
+                <th width="10%">Kode</th>
+                <th width="18%">Nama Ruangan</th>
+                <th width="12%">Lokasi</th>
+                <th width="8%">Kapasitas</th>
+                <th width="25%">Fasilitas</th>
                 <th width="10%">Keterangan</th>
                 <th width="12%">Status Tahun {{ $tahun }}</th>
             </tr>
@@ -84,7 +83,6 @@
                 <td>{{ $ruangan->lokasi ?? '-' }}</td>
                 <td class="text-center">{{ $ruangan->kapasitas ?? '-' }}</td>
                 <td>{{ $ruangan->fasilitas ?? '-' }}</td>
-                <td class="text-center">{{ $ruangan->barangs_count ?? 0 }}</td>
                 <td>{{ $ruangan->keterangan ?? '-' }}</td>
                 <td class="text-center">
                     @if($ruangan->trashed())
@@ -97,7 +95,7 @@
                 </td>
             </tr>
             @empty
-            <tr><td colspan="9" class="text-center">Tidak ada data ruangan untuk tahun {{ $tahun }}.</td></tr>
+            <tr><td colspan="8" class="text-center">Tidak ada data ruangan untuk tahun {{ $tahun }}.</td></tr>
             @endforelse
         </tbody>
     </table>

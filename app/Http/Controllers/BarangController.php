@@ -312,6 +312,65 @@ class BarangController extends Controller
         ]);
     }
 
+    /**
+     * Set foto default (AJAX) — terapkan satu foto yang sama ke banyak
+     * barang sekaligus berdasarkan daftar ID. Berguna setelah import Excel
+     * (yang tidak bisa membawa foto sekaligus), supaya operator tidak perlu
+     * upload foto satu per satu untuk tiap item.
+     */
+    public function bulkSetFoto(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required',
+            'foto_barang' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $ids = $request->input('ids', []);
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $ids))));
+
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada barang yang dipilih.',
+            ], 422);
+        }
+
+        $barangs = Barang::whereIn('id', $ids)->get();
+        if ($barangs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barang tidak ditemukan.',
+            ], 404);
+        }
+
+        // Catat foto lama yang dipakai item-item ini, supaya bisa dibersihkan
+        // kalau sudah tidak dipakai barang manapun setelah diganti.
+        $fotoLamaTerpakai = $barangs->pluck('foto_barang')->filter()->unique()->values();
+
+        $foto = $request->file('foto_barang');
+        $namaFotoBaru = Str::uuid() . '.' . $foto->getClientOriginalExtension();
+        $foto->storeAs('foto_barang', $namaFotoBaru, 'public');
+
+        $updated = Barang::whereIn('id', $ids)->update(['foto_barang' => $namaFotoBaru]);
+
+        foreach ($fotoLamaTerpakai as $fotoLama) {
+            $masihDipakai = Barang::where('foto_barang', $fotoLama)->exists();
+            if (!$masihDipakai && Storage::disk('public')->exists('foto_barang/' . $fotoLama)) {
+                Storage::disk('public')->delete('foto_barang/' . $fotoLama);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'updated' => $updated,
+            'foto_url' => asset('storage/foto_barang/' . $namaFotoBaru),
+            'message' => "Foto berhasil diterapkan ke {$updated} barang.",
+        ]);
+    }
+
     public function export()
     {
         return Excel::download(new BarangExport, 'Data_Barang_'.date('Ymd_His').'.xlsx');

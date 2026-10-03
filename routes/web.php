@@ -74,6 +74,7 @@ Route::get('/operator/barang-batch/barcode', function(\Illuminate\Http\Request $
 })->name('barang.batch-barcode');
 
 Route::delete('/operator/barang-batch/destroy', [BarangController::class, 'bulkDestroy'])->name('barang.bulk-destroy');
+Route::post('/operator/barang-batch/set-foto', [BarangController::class, 'bulkSetFoto'])->name('barang.bulk-set-foto');
     // Ubah rute ini
     Route::get('/operator/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
 

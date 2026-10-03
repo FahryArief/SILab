@@ -87,6 +87,39 @@
                 }
             })
             .catch(() => showToast('Gagal menghapus data.', true));
+        },
+        bulkSetFotoSelected(file) {
+            if (!file) return;
+            if (this.selectedIds.length === 0) { alert('Pilih minimal 1 item terlebih dahulu.'); return; }
+            if (!confirm(`Terapkan foto ini ke ${this.selectedIds.length} barang terpilih? Foto masing-masing item yang sudah ada (jika ada) akan diganti.`)) {
+                document.getElementById('bulkFotoInput').value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('foto_barang', file);
+            this.selectedIds.forEach(id => formData.append('ids[]', id));
+
+            fetch('{{ route('barang.bulk-set-foto') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    showToast(res.message);
+                    this.selectedIds = [];
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    showToast(res.message || 'Gagal menerapkan foto.', true);
+                }
+            })
+            .catch(() => showToast('Gagal menerapkan foto.', true))
+            .finally(() => { document.getElementById('bulkFotoInput').value = ''; });
         }
     }">
         {{-- Flash --}}
@@ -163,6 +196,11 @@
                 <button @click="bulkDeleteSelected()" class="bg-red-600 text-white px-4 py-1.5 rounded-md text-xs font-bold hover:bg-red-700 transition flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Hapus Massal
+                </button>
+                <input type="file" id="bulkFotoInput" accept="image/*" class="hidden" @change="bulkSetFotoSelected($event.target.files[0])">
+                <button @click="document.getElementById('bulkFotoInput').click()" class="bg-amber-500 text-white px-4 py-1.5 rounded-md text-xs font-bold hover:bg-amber-600 transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 8a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"></path></svg>
+                    Set Foto
                 </button>
                 <button @click="toggleSelectAll(!allMatchingSelected)" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-1.5" x-text="allMatchingSelected ? 'Batalkan Semua' : 'Pilih Semua Hasil Filter'"></button>
                 <button @click="selectedIds = []" class="text-xs text-gray-500 hover:text-gray-800 font-semibold px-3 py-1.5">Batal Pilih</button>
