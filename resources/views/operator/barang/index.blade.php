@@ -15,36 +15,15 @@
             if (i === -1) this.selectedIds.push(id);
             else this.selectedIds.splice(i, 1);
         },
-        itemMatches(el) {
-            const kategori = el.dataset.kategori || '';
-            const ruangan = el.dataset.ruangan || '';
-            const status = el.dataset.status || '';
-            const searchText = (el.dataset.search || '').toLowerCase();
-            const matchSearch = !this.search || searchText.includes(this.search.toLowerCase());
-            const matchKategori = !this.filterKategori || kategori === this.filterKategori;
-            const matchRuangan = !this.filterRuangan || ruangan.includes(this.filterRuangan);
-            const matchStatus = !this.filterStatus || status.includes(this.filterStatus);
-            return matchSearch && matchKategori && matchRuangan && matchStatus;
-        },
-        getMatchingCheckboxes() {
-            return Array.from(document.querySelectorAll('#barangTableContainer input[type=checkbox][data-id]'))
-                        .filter(cb => this.itemMatches(cb));
-        },
-        toggleSelectAll(checked) {
-            const matching = this.getMatchingCheckboxes();
+        toggleGroupSelect(ids, checked) {
             if (checked) {
-                matching.forEach(cb => {
-                    const id = parseInt(cb.dataset.id, 10);
-                    if (!this.selectedIds.includes(id)) this.selectedIds.push(id);
-                });
+                ids.forEach(id => { if (!this.selectedIds.includes(id)) this.selectedIds.push(id); });
             } else {
-                const ids = matching.map(cb => parseInt(cb.dataset.id, 10));
                 this.selectedIds = this.selectedIds.filter(id => !ids.includes(id));
             }
         },
-        get allMatchingSelected() {
-            const matching = this.getMatchingCheckboxes();
-            return matching.length > 0 && matching.every(cb => this.selectedIds.includes(parseInt(cb.dataset.id, 10)));
+        groupAllSelected(ids) {
+            return ids.length > 0 && ids.every(id => this.selectedIds.includes(id));
         },
         isVisible(el) {
             const nama = el.dataset.nama || '';
@@ -202,7 +181,6 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 8a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"></path></svg>
                     Set Foto
                 </button>
-                <button @click="toggleSelectAll(!allMatchingSelected)" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-1.5" x-text="allMatchingSelected ? 'Batalkan Semua' : 'Pilih Semua Hasil Filter'"></button>
                 <button @click="selectedIds = []" class="text-xs text-gray-500 hover:text-gray-800 font-semibold px-3 py-1.5">Batal Pilih</button>
             </div>
         </div>
@@ -220,10 +198,7 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                     <tr>
-                        <th class="px-3 py-3 font-semibold w-8 text-center">
-                            <input type="checkbox" :checked="allMatchingSelected" @change="toggleSelectAll($event.target.checked)"
-                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" title="Pilih Semua">
-                        </th>
+                        <th class="px-3 py-3 font-semibold w-8 text-center"></th>
                         <th class="px-3 py-3 font-semibold w-8"></th>
                         <th class="px-3 py-3 font-semibold">Nama Barang</th>
                         <th class="px-3 py-3 font-semibold">Kategori</th>
@@ -243,6 +218,7 @@
                     $statusList = $items->pluck('status_peminjaman')->unique()->implode(',');
                     $ruanganList = $items->pluck('ruangan.nama_ruangan')->filter()->unique()->implode(',');
                     $searchList = $items->map(function($i) { return $i->barcode . ' ' . $i->merk; })->implode(' ');
+                    $groupIds = $items->pluck('id')->values()->all();
                 @endphp
                 <tbody class="divide-y divide-gray-100" x-data="{ open: false }"
                        data-nama="{{ $nama_barang }}"
@@ -253,7 +229,13 @@
                        x-show="isVisible($el)" x-transition.opacity>
                     {{-- Master Row --}}
                     <tr class="hover:bg-gray-50 transition-colors cursor-pointer border-t border-gray-200" @click="open = !open">
-                        <td class="px-3 py-3"></td>
+                        <td class="px-3 py-3 text-center" @click.stop>
+                            <input type="checkbox"
+                                   :checked="groupAllSelected({{ json_encode($groupIds) }})"
+                                   @change="toggleGroupSelect({{ json_encode($groupIds) }}, $event.target.checked)"
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                                   title="Pilih semua barang di grup ini">
+                        </td>
                         <td class="px-3 py-3 text-center">
                             <svg class="w-4 h-4 transform transition-transform duration-200 mx-auto text-gray-400" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </td>
