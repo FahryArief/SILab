@@ -88,6 +88,10 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Booking Ruang</span>
                 </a>
+                <a href="{{ route('admin.pemeliharaan.index') }}" title="Pemeliharaan" class="flex items-center px-6 py-3 {{ request()->routeIs('admin.pemeliharaan.*') ? 'bg-slate-800 text-white border-l-4 border-indigo-500' : 'hover:bg-slate-800 hover:text-white' }} transition-colors mt-1 group">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.909 4.909m-1.745 1.437l1.745-1.437m6.612 6.612a1.5 1.5 0 11-2.122-2.122 1.5 1.5 0 012.122 2.122z"></path></svg>
+                    <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Pemeliharaan</span>
+                </a>
                 <a href="{{ route('laporan.index') }}" title="Cetak Laporan" class="flex items-center px-6 py-3 {{ request()->routeIs('laporan.*') ? 'bg-slate-800 text-white border-l-4 border-indigo-500' : 'hover:bg-slate-800 hover:text-white' }} transition-colors mt-1 group">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Laporan</span>
@@ -143,6 +147,10 @@
                 <a href="{{ route('admin.audit.periode.index') }}" title="Audit Inventaris" class="flex items-center px-6 py-3 {{ request()->routeIs('admin.audit.*') ? 'bg-slate-800 text-white border-l-4 border-indigo-500' : 'hover:bg-slate-800 hover:text-white' }} transition-colors mt-1 group">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Audit Inventaris</span>
+                </a>
+                <a href="{{ route('admin.pemeliharaan.index') }}" title="Pemeliharaan" class="flex items-center px-6 py-3 {{ request()->routeIs('admin.pemeliharaan.*') ? 'bg-slate-800 text-white border-l-4 border-indigo-500' : 'hover:bg-slate-800 hover:text-white' }} transition-colors mt-1 group">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.909 4.909m-1.745 1.437l1.745-1.437m6.612 6.612a1.5 1.5 0 11-2.122-2.122 1.5 1.5 0 012.122 2.122z"></path></svg>
+                    <span x-show="!isCollapsed" class="ml-4 text-sm whitespace-nowrap">Pemeliharaan</span>
                 </a>
                 @endif
 
