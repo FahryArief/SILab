@@ -206,6 +206,7 @@ Route::middleware(['auth', 'role:teknisi,kepala_lab,ka_prodi,super_admin'])->gro
     Route::post('/laporan/peminjaman', [\App\Http\Controllers\LaporanController::class, 'cetakPeminjaman'])->name('laporan.peminjaman');
     Route::get('/laporan/barang', [\App\Http\Controllers\LaporanController::class, 'cetakBarang'])->name('laporan.barang');
     Route::get('/laporan/ruangan', [\App\Http\Controllers\LaporanController::class, 'cetakRuangan'])->name('laporan.ruangan');
+    Route::get('/laporan/jadwal', [\App\Http\Controllers\LaporanController::class, 'cetakJadwal'])->name('laporan.jadwal');
     Route::post('/laporan/audit', [\App\Http\Controllers\LaporanController::class, 'cetakAudit'])->name('laporan.audit');
 });
 

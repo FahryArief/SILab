@@ -25,20 +25,20 @@
                     <svg class="w-4 h-4 ml-2 transition-transform" :class="{ 'rotate-180': exportOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <div x-show="exportOpen" @click.outside="exportOpen = false" x-transition class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
-                    <a href="{{ route('laporan.barang') }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 transition-colors border-b border-gray-100">
+                    <button @click="exportOpen = false; document.getElementById('exportBarangModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 transition-colors w-full text-left border-b border-gray-100">
                         <span class="text-lg mr-3">📦</span>
                         <div>
                             <div class="font-bold text-xs">Laporan Data Barang</div>
-                            <div class="text-[10px] text-gray-400">Seluruh inventaris barang</div>
+                            <div class="text-[10px] text-gray-400">Bisa difilter per Tahun Ajaran</div>
                         </div>
-                    </a>
-                    <a href="{{ route('laporan.ruangan', ['tahun' => $tahunIni]) }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 transition-colors border-b border-gray-100">
+                    </button>
+                    <button @click="exportOpen = false; document.getElementById('exportRuanganModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 transition-colors w-full text-left border-b border-gray-100">
                         <span class="text-lg mr-3">🏠</span>
                         <div>
                             <div class="font-bold text-xs">Laporan Data Ruangan</div>
-                            <div class="text-[10px] text-gray-400">Kondisi ruangan di tahun {{ $tahunIni }} (termasuk yang sudah nonaktif)</div>
+                            <div class="text-[10px] text-gray-400">Kondisi ruangan per Tahun Ajaran (termasuk yang sudah nonaktif)</div>
                         </div>
-                    </a>
+                    </button>
                     <button @click="exportOpen = false; document.getElementById('exportPeminjamanModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 transition-colors w-full text-left border-b border-gray-100">
                         <span class="text-lg mr-3">📋</span>
                         <div>
@@ -46,11 +46,18 @@
                             <div class="text-[10px] text-gray-400">Per rentang tanggal</div>
                         </div>
                     </button>
-                    <button @click="exportOpen = false; document.getElementById('exportAuditModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 transition-colors w-full text-left">
+                    <button @click="exportOpen = false; document.getElementById('exportAuditModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 transition-colors w-full text-left border-b border-gray-100">
                         <span class="text-lg mr-3">🔍</span>
                         <div>
                             <div class="font-bold text-xs">Laporan Audit</div>
                             <div class="text-[10px] text-gray-400">Per periode audit</div>
+                        </div>
+                    </button>
+                    <button @click="exportOpen = false; document.getElementById('exportJadwalModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-amber-50 transition-colors w-full text-left">
+                        <span class="text-lg mr-3">🗓️</span>
+                        <div>
+                            <div class="font-bold text-xs">Jadwal Penggunaan Lab</div>
+                            <div class="text-[10px] text-gray-400">Per Tahun Ajaran &amp; Ruangan</div>
                         </div>
                     </button>
                 </div>
@@ -202,6 +209,127 @@
                         <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Unduh PDF Peminjaman
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Export PDF Modal: Barang --}}
+    <div id="exportBarangModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-900 opacity-50 transition-opacity" onclick="document.getElementById('exportBarangModal').classList.add('hidden')"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <div class="flex justify-between items-center mb-5 border-b pb-3">
+                    <h3 class="text-lg font-bold text-gray-800">📦 Laporan Data Barang</h3>
+                    <button onclick="document.getElementById('exportBarangModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('laporan.barang') }}" method="GET" target="_blank">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Tahun Ajaran (opsional)</label>
+                        <select name="tahun_ajaran_id" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                            <option value="">Kondisi Saat Ini (Semua)</option>
+                            @foreach($tahunAjarans as $ta)
+                                <option value="{{ $ta->id }}">{{ $ta->nama_tahun }} ({{ $ta->semester }}){{ $ta->is_active ? ' — Aktif' : '' }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-[10px] text-gray-400 mt-1">Kalau dipilih, lokasi tiap barang ditampilkan sesuai histori pada Tahun Ajaran tersebut, bukan lokasi saat ini.</p>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Unduh PDF Data Barang
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Export PDF Modal: Ruangan --}}
+    <div id="exportRuanganModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-900 opacity-50 transition-opacity" onclick="document.getElementById('exportRuanganModal').classList.add('hidden')"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <div class="flex justify-between items-center mb-5 border-b pb-3">
+                    <h3 class="text-lg font-bold text-gray-800">🏠 Laporan Data Ruangan</h3>
+                    <button onclick="document.getElementById('exportRuanganModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('laporan.ruangan') }}" method="GET" target="_blank">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Tahun Ajaran</label>
+                        <select name="tahun_ajaran_id" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                            <option value="">Tahun Kalender {{ $tahunIni }} (default)</option>
+                            @foreach($tahunAjarans as $ta)
+                                <option value="{{ $ta->id }}">{{ $ta->nama_tahun }} ({{ $ta->semester }}){{ $ta->is_active ? ' — Aktif' : '' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Unduh PDF Data Ruangan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Export PDF Modal: Jadwal Penggunaan Lab --}}
+    <div id="exportJadwalModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-900 opacity-50 transition-opacity" onclick="document.getElementById('exportJadwalModal').classList.add('hidden')"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <div class="flex justify-between items-center mb-5 border-b pb-3">
+                    <h3 class="text-lg font-bold text-gray-800">🗓️ Jadwal Penggunaan Lab</h3>
+                    <button onclick="document.getElementById('exportJadwalModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('laporan.jadwal') }}" method="GET" target="_blank">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Tahun Ajaran</label>
+                            <select name="tahun_ajaran_id" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                                <option value="">Tahun Ajaran Aktif (default)</option>
+                                @foreach($tahunAjarans as $ta)
+                                    <option value="{{ $ta->id }}">{{ $ta->nama_tahun }} ({{ $ta->semester }}){{ $ta->is_active ? ' — Aktif' : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Ruangan</label>
+                            <select name="ruangan_id" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                                <option value="">Semua Ruangan</option>
+                                @foreach($ruanganList as $r)
+                                    <option value="{{ $r->id }}">{{ $r->nama_ruangan }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Mata Kuliah (opsional)</label>
+                            <input type="text" name="mata_kuliah" placeholder="Cari nama mata kuliah..." class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Unduh PDF Jadwal
                         </button>
                     </div>
                 </form>

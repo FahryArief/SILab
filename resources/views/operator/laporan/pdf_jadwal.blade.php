@@ -2,31 +2,31 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Data Ruangan</title>
+    <title>Laporan Jadwal Penggunaan Lab</title>
     <style>
         body { font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #333; line-height: 1.4; }
         .kop-surat { text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         .kop-brand { width: 100%; border-collapse: collapse; margin: 0 0 6px 0; }
         .kop-brand td { border: none; padding: 0; vertical-align: middle; }
         .kop-brand .brand-left, .kop-brand .brand-right { width: 15%; }
-        .kop-brand .brand-left { text-align: left; }
-        .kop-brand .brand-right { text-align: right; }
+        .kop-brand .brand-left { text-align: left; padding-left: 100px; }
+        .kop-brand .brand-right { text-align: right; padding-right: 100px; }
         .kop-brand .brand-copy { width: 100%; text-align: center; }
         .kop-brand img { width: 90px; height: 90px; object-fit: contain; }
         .kop-surat h1 { margin: 0; font-size: 16px; text-transform: uppercase; font-weight: bold; }
-        .kop-surat h2 { margin: 0; font-size: 16px; font-weight: normal; }
         .kop-surat p { margin: 2px 0 0 0; font-size: 11px; font-style: italic; }
         .judul { text-align: center; margin-bottom: 20px; }
         .judul h3 { margin: 0; font-size: 14px; text-decoration: underline; }
         .judul p { margin: 5px 0 0 0; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; font-size: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        th, td { border: 1px solid #000; padding: 5px 8px; text-align: left; font-size: 10px; }
         th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
         .text-center { text-align: center; }
         .ringkasan { margin-bottom: 20px; }
         .ringkasan table { width: auto; }
         .ringkasan td { border: none; padding: 2px 10px 2px 0; }
         .ringkasan td:first-child { font-weight: bold; }
+        .ruangan-heading { background-color: #e2e8f0; font-weight: bold; font-size: 11px; padding: 6px 8px; border: 1px solid #000; }
         .ttd-container { width: 100%; margin-top: 40px; }
         .ttd-box { float: right; width: 250px; text-align: center; }
         .ttd-box p { margin: 0 0 60px 0; }
@@ -49,59 +49,53 @@
     </div>
 
     <div class="judul">
-        <h3>LAPORAN DATA RUANGAN LABORATORIUM — TAHUN {{ $tahun }}</h3>
+        <h3>LAPORAN JADWAL PENGGUNAAN LABORATORIUM</h3>
         <p>Dicetak pada: {{ \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') }} WIB</p>
     </div>
 
     <div class="ringkasan">
         <table>
-            @if(isset($tahunAjaran) && $tahunAjaran)
             <tr><td>Tahun Ajaran</td><td>: {{ $tahunAjaran->nama_tahun }} ({{ $tahunAjaran->semester }})</td></tr>
+            @if($ruanganFilter)
+            <tr><td>Ruangan</td><td>: {{ $ruanganFilter->nama_ruangan }}</td></tr>
+            @else
+            <tr><td>Ruangan</td><td>: Semua Ruangan</td></tr>
             @endif
-            <tr><td>Tahun Laporan</td><td>: {{ $tahun }}</td></tr>
-            <tr><td>Total Ruangan Aktif di Tahun Ini</td><td>: {{ $ruangans->count() }} ruangan</td></tr>
-            <tr><td>Total Kapasitas</td><td>: {{ $ruangans->sum('kapasitas') }} orang</td></tr>
+            <tr><td>Total Jadwal</td><td>: {{ $jadwals->flatten(1)->count() }} jadwal</td></tr>
         </table>
     </div>
 
+    @forelse($jadwals as $namaRuangan => $jadwalRuangan)
     <table>
         <thead>
+            <tr><th colspan="5" class="ruangan-heading" style="text-align:left;">{{ $namaRuangan }}</th></tr>
             <tr>
-                <th width="5%">No</th>
-                <th width="10%">Kode</th>
-                <th width="18%">Nama Ruangan</th>
-                <th width="12%">Lokasi</th>
-                <th width="8%">Kapasitas</th>
-                <th width="25%">Fasilitas</th>
-                <th width="10%">Keterangan</th>
-                <th width="12%">Status Tahun {{ $tahun }}</th>
+                <th width="6%">No</th>
+                <th width="14%">Hari</th>
+                <th width="18%">Waktu</th>
+                <th width="37%">Mata Kuliah</th>
+                <th width="25%">Dosen</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($ruangans as $index => $ruangan)
+            @foreach($jadwalRuangan as $index => $jadwal)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $ruangan->kode_ruangan ?? '-' }}</td>
-                <td>{{ $ruangan->nama_ruangan }}</td>
-                <td>{{ $ruangan->lokasi ?? '-' }}</td>
-                <td class="text-center">{{ $ruangan->kapasitas ?? '-' }}</td>
-                <td>{{ $ruangan->fasilitas ?? '-' }}</td>
-                <td>{{ $ruangan->keterangan ?? '-' }}</td>
-                <td class="text-center">
-                    @if($ruangan->trashed())
-                        Nonaktif sejak {{ $ruangan->deleted_at->translatedFormat('d M Y') }}
-                    @elseif($ruangan->lab_nonaktif_sejak)
-                        Lab s.d. {{ $ruangan->lab_nonaktif_sejak->translatedFormat('M Y') }}
-                    @else
-                        Aktif sebagai Lab
-                    @endif
-                </td>
+                <td>{{ $jadwal->hari }}</td>
+                <td class="text-center">{{ \Carbon\Carbon::parse($jadwal->waktu_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($jadwal->waktu_selesai)->format('H:i') }}</td>
+                <td>{{ $jadwal->mata_kuliah }}</td>
+                <td>{{ $jadwal->dosen ?? '-' }}</td>
             </tr>
-            @empty
-            <tr><td colspan="8" class="text-center">Tidak ada data ruangan untuk tahun {{ $tahun }}.</td></tr>
-            @endforelse
+            @endforeach
         </tbody>
     </table>
+    @empty
+    <table>
+        <tbody>
+            <tr><td class="text-center">Tidak ada jadwal kuliah untuk Tahun Ajaran dan filter yang dipilih.</td></tr>
+        </tbody>
+    </table>
+    @endforelse
 
     <div class="ttd-container clearfix">
         <div class="ttd-box">
