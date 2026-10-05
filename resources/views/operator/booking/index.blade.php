@@ -155,6 +155,34 @@
                 </div>
                 @endforelse
             </div>
+
+            @if($jadwalKuliahHariIni->isNotEmpty())
+            <div class="border-t border-gray-100 bg-indigo-50/40 p-6 space-y-3">
+                <h4 class="text-[11px] font-bold text-indigo-700 uppercase tracking-widest flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Jadwal Kuliah Ruangan ({{ $hariTerpilih }})
+                </h4>
+                <p class="text-[10px] text-gray-500 -mt-1">Ruangan berikut sudah terpakai untuk perkuliahan pada hari ini, jadi hindari membuat booking yang bertabrakan dengan jam-jam ini.</p>
+                <div class="space-y-2">
+                    @foreach($jadwalKuliahHariIni as $jk)
+                    <div class="flex items-center justify-between bg-white border border-indigo-100 rounded-lg px-4 py-2.5">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">{{ $jk->mata_kuliah }}</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">
+                                {{ $jk->ruangan->nama_ruangan ?? 'Ruangan tidak diketahui' }}
+                                @if($jk->dosen)
+                                    <span class="mx-1">•</span>{{ $jk->dosen }}
+                                @endif
+                            </p>
+                        </div>
+                        <span class="text-[10px] font-mono text-indigo-600 font-bold whitespace-nowrap ml-3">
+                            {{ substr($jk->waktu_mulai, 0, 5) }}&ndash;{{ substr($jk->waktu_selesai, 0, 5) }}
+                        </span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 

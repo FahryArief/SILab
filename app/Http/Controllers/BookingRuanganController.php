@@ -36,6 +36,26 @@ class BookingRuanganController extends Controller
         $users = User::select(['id', 'name', 'email'])
             ->where('role', 'peminjam')->get();
 
+        // 2b. Ambil jadwal kuliah pada hari yang sama dengan tanggal terpilih,
+        // supaya ruangan yang sudah dipakai untuk kuliah ikut terlihat di halaman booking.
+        $daysMap = [
+            'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+        ];
+        $hariTerpilih = $daysMap[date('l', strtotime($selectedDate))];
+
+        $tahunAjaranAktif = \App\Models\TahunAjaran::where('is_active', true)->first();
+
+        $jadwalKuliahHariIni = collect();
+        if ($tahunAjaranAktif) {
+            $jadwalKuliahHariIni = \App\Models\JadwalKuliah::with('ruangan')
+                ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
+                ->where('hari', $hariTerpilih)
+                ->orderBy('waktu_mulai')
+                ->get();
+        }
+
         // 4. LOGIKA KALENDER DINAMIS
         $currentMonth = date('m', strtotime($selectedDate));
         $currentYear = date('Y', strtotime($selectedDate));
@@ -76,7 +96,8 @@ class BookingRuanganController extends Controller
         return view('operator.booking.index', compact(
             'bookings', 'users', 'selectedDate', 'monthName',
             'currentMonth', 'currentYear', 'daysInMonth', 'startDayOfWeek',
-            'prevMonth', 'nextMonth', 'allBookings', 'filterStatus', 'searchBooking'
+            'prevMonth', 'nextMonth', 'allBookings', 'filterStatus', 'searchBooking',
+            'jadwalKuliahHariIni', 'hariTerpilih'
         ));
     }
 
