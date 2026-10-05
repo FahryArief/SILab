@@ -19,14 +19,26 @@ class JadwalKuliahController extends Controller
      */
     public function index()
     {
-        // Hanya tampilkan tahun ajaran yang aktif secara default, atau ambil semua jika ingin filter
+        // Jadwal kuliah terkunci ke Tahun Ajaran yang sedang aktif.
+        // Ganti Tahun Ajaran aktif -> daftar jadwal yang tampil otomatis ikut berganti.
+        // Tahun Ajaran baru (belum ada jadwalnya) -> daftar kosong.
+        // Balik ke Tahun Ajaran sebelumnya -> jadwal lama yang tersimpan tampil lagi.
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         $ruangans = Ruangan::select(['id', 'nama_ruangan'])->orderBy('nama_ruangan')->get();
-        
+
         $jadwals = JadwalKuliah::with([
-            'ruangan:id,nama_ruangan',
-            'tahunAjaran:id,nama_tahun',
-        ])->latest()->paginate(25)->withQueryString();
+                'ruangan:id,nama_ruangan',
+                'tahunAjaran:id,nama_tahun',
+            ])
+            ->when($tahunAjaranAktif, function ($query) use ($tahunAjaranAktif) {
+                $query->where('tahun_ajaran_id', $tahunAjaranAktif->id);
+            }, function ($query) {
+                // Tidak ada Tahun Ajaran aktif sama sekali -> jangan tampilkan jadwal apapun.
+                $query->whereRaw('1 = 0');
+            })
+            ->latest()
+            ->paginate(25)
+            ->withQueryString();
 
         return view('admin.jadwal_kuliah.index', compact('jadwals', 'ruangans', 'tahunAjaranAktif'));
     }
