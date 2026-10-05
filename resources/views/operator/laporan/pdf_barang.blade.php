@@ -56,6 +56,9 @@
 
     <div class="ringkasan">
         <table>
+            @if(isset($tahunAjaran) && $tahunAjaran)
+            <tr><td>Tahun Ajaran</td><td>: {{ $tahunAjaran->nama_tahun }} ({{ $tahunAjaran->semester }}) &mdash; lokasi barang ditampilkan sesuai kondisi pada periode ini</td></tr>
+            @endif
             <tr><td>Total Barang</td><td>: {{ $barangs->count() }} item</td></tr>
             <tr><td>Kondisi Baik</td><td>: {{ $barangs->where('kondisi', 'Baik')->count() }} item</td></tr>
             <tr><td>Kondisi Rusak Ringan</td><td>: {{ $barangs->where('kondisi', 'Rusak Ringan')->count() }} item</td></tr>

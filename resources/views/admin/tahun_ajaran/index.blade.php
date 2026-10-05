@@ -46,6 +46,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun Ajaran</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periode</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -56,6 +57,15 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $index + 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $ta->nama_tahun }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ta->semester }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if($ta->tanggal_mulai)
+                                            {{ $ta->tanggal_mulai->translatedFormat('d M Y') }}
+                                            &ndash;
+                                            {{ $ta->tanggal_selesai ? $ta->tanggal_selesai->translatedFormat('d M Y') : 'sekarang' }}
+                                        @else
+                                            <span class="text-gray-400 italic">Belum diisi</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($ta->is_active)
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 shadow-sm">
@@ -103,6 +113,17 @@
                                                             <option value="Genap" {{ $ta->semester == 'Genap' ? 'selected' : '' }}>Genap</option>
                                                         </select>
                                                     </div>
+                                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
+                                                            <input type="date" name="tanggal_mulai" value="{{ $ta->tanggal_mulai?->format('Y-m-d') }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700">Tanggal Selesai</label>
+                                                            <input type="date" name="tanggal_selesai" value="{{ $ta->tanggal_selesai?->format('Y-m-d') }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                                        </div>
+                                                    </div>
+                                                    <p class="text-xs text-gray-400 -mt-2 mb-2">Kosongkan Tanggal Selesai kalau Tahun Ajaran ini masih berjalan.</p>
                                                 </div>
                                                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                                     <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>
@@ -114,7 +135,7 @@
                                 </div>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Belum ada data Tahun Ajaran.</td>
+                                    <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Belum ada data Tahun Ajaran.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -146,6 +167,17 @@
                                 <option value="Genap">Genap</option>
                             </select>
                         </div>
+                        <div class="grid grid-cols-2 gap-4 mb-1">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
+                                <input type="date" name="tanggal_mulai" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Tanggal Selesai</label>
+                                <input type="date" name="tanggal_selesai" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-2">Opsional, bisa diisi belakangan. Kosongkan Tanggal Selesai kalau masih berjalan.</p>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>

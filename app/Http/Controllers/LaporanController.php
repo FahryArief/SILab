@@ -10,6 +10,8 @@ use App\Models\Ruangan;
 use App\Models\AuditPeriode;
 use App\Models\AuditBarang;
 use App\Models\AuditRuangan;
+use App\Models\JadwalKuliah;
+use App\Models\TahunAjaran;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
@@ -92,10 +94,15 @@ class LaporanController extends Controller
         // ========== DATA UNTUK EXPORT AUDIT ==========
         $auditPeriodes = AuditPeriode::orderByDesc('tanggal_mulai')->get();
 
+        // ========== DATA UNTUK FILTER TAHUN AJARAN DI LAPORAN ==========
+        $tahunAjarans = TahunAjaran::orderByDesc('tanggal_mulai')->orderByDesc('id')->get();
+        $ruanganList = Ruangan::select(['id', 'nama_ruangan'])->orderBy('nama_ruangan')->get();
+
         return view('operator.laporan.index', compact(
             'dataTren', 'labelKategori', 'dataKategori', 'labelRuang', 'dataRuang', 'tahunIni',
             'totalBarang', 'totalRuangan', 'totalPeminjaman', 'totalBooking',
-            'kondisiData', 'kondisiLabel', 'statusStats', 'dataBookingTren', 'auditPeriodes'
+            'kondisiData', 'kondisiLabel', 'statusStats', 'dataBookingTren', 'auditPeriodes',
+            'tahunAjarans', 'ruanganList'
         ));
     }
 
@@ -121,17 +128,35 @@ class LaporanController extends Controller
 
     /**
      * Export PDF: Laporan Data Barang
+     *
+     * Bisa difilter per Tahun Ajaran (?tahun_ajaran_id=). Kalau diisi, lokasi
+     * (ruangan) tiap barang yang ditampilkan diambil dari histori lokasinya
+     * pada Tahun Ajaran itu (lihat Barang::ruanganPadaTahunAjaran), bukan
+     * ruangan_id saat ini — supaya laporan historis tetap akurat walau
+     * barangnya sudah dipindah ruangan sejak saat itu.
      */
-    public function cetakBarang()
+    public function cetakBarang(Request $request)
     {
+        $tahunAjaran = $request->filled('tahun_ajaran_id')
+            ? TahunAjaran::find($request->tahun_ajaran_id)
+            : null;
+
         $barangs = Barang::with(['kategori:id,nama_kategori', 'ruangan:id,nama_ruangan'])
                     ->orderBy('nama_barang')
                     ->get();
 
-        $pdf = Pdf::loadView('operator.laporan.pdf_barang', compact('barangs'));
+        if ($tahunAjaran) {
+            $barangs->each(function ($barang) use ($tahunAjaran) {
+                $barang->setRelation('ruangan', $barang->ruanganPadaTahunAjaran($tahunAjaran->id));
+            });
+        }
+
+        $pdf = Pdf::loadView('operator.laporan.pdf_barang', compact('barangs', 'tahunAjaran'));
         $pdf->setPaper('A4', 'landscape');
 
-        return $pdf->stream('Laporan_Data_Barang_'.date('Y-m-d').'.pdf');
+        $namaFile = $tahunAjaran ? str_replace('/', '-', $tahunAjaran->nama_tahun).'_'.$tahunAjaran->semester : date('Y-m-d');
+
+        return $pdf->stream('Laporan_Data_Barang_'.$namaFile.'.pdf');
     }
 
     /**
@@ -144,16 +169,72 @@ class LaporanController extends Controller
      */
     public function cetakRuangan(Request $request)
     {
-        $tahun = $request->input('tahun', date('Y'));
+        // Dropdown di halaman Laporan sekarang mengirim tahun_ajaran_id, bukan
+        // angka tahun polos lagi. Tahun kalender tetap dipakai di belakang
+        // untuk logika scopeAktifPadaTahun() yang sudah teruji (supaya tidak
+        // mengubah logika histori Ruangan yang sudah jalan) — tinggal
+        // diturunkan dari tanggal_mulai Tahun Ajaran yang dipilih.
+        $tahunAjaran = $request->filled('tahun_ajaran_id')
+            ? TahunAjaran::find($request->tahun_ajaran_id)
+            : null;
+
+        $tahun = ($tahunAjaran && $tahunAjaran->tanggal_mulai)
+            ? $tahunAjaran->tanggal_mulai->year
+            : $request->input('tahun', date('Y'));
 
         $ruangans = Ruangan::aktifPadaTahun($tahun)
             ->withCount('barangs')
             ->orderBy('nama_ruangan')
             ->get();
 
-        $pdf = Pdf::loadView('operator.laporan.pdf_ruangan', compact('ruangans', 'tahun'));
+        $pdf = Pdf::loadView('operator.laporan.pdf_ruangan', compact('ruangans', 'tahun', 'tahunAjaran'));
 
         return $pdf->stream('Laporan_Data_Ruangan_'.$tahun.'.pdf');
+    }
+
+    /**
+     * Export PDF: Laporan Jadwal Penggunaan Lab
+     *
+     * Terkunci ke Tahun Ajaran (default: yang sedang aktif). Bisa diperhalus
+     * dengan filter Ruangan tertentu dan/atau kata kunci Mata Kuliah.
+     */
+    public function cetakJadwal(Request $request)
+    {
+        $request->validate([
+            'tahun_ajaran_id' => 'nullable|exists:tahun_ajarans,id',
+            'ruangan_id' => 'nullable|exists:ruangans,id',
+            'mata_kuliah' => 'nullable|string|max:255',
+        ]);
+
+        $tahunAjaran = $request->filled('tahun_ajaran_id')
+            ? TahunAjaran::find($request->tahun_ajaran_id)
+            : TahunAjaran::where('is_active', true)->first();
+
+        if (!$tahunAjaran) {
+            return redirect()->back()->with('error', 'Tidak ada Tahun Ajaran yang dipilih maupun yang sedang aktif. Pilih atau aktifkan Tahun Ajaran dahulu.');
+        }
+
+        $ruanganFilter = $request->filled('ruangan_id')
+            ? Ruangan::withTrashed()->find($request->ruangan_id)
+            : null;
+
+        $jadwals = JadwalKuliah::with(['ruangan' => function ($q) {
+                $q->withTrashed();
+            }])
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->when($ruanganFilter, fn($q) => $q->where('ruangan_id', $ruanganFilter->id))
+            ->when($request->filled('mata_kuliah'), fn($q) => $q->where('mata_kuliah', 'like', '%'.$request->mata_kuliah.'%'))
+            ->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu')")
+            ->orderBy('waktu_mulai')
+            ->get()
+            ->groupBy(fn($jadwal) => $jadwal->ruangan->nama_ruangan ?? 'Ruangan Dihapus');
+
+        $pdf = Pdf::loadView('operator.laporan.pdf_jadwal', compact('jadwals', 'tahunAjaran', 'ruanganFilter'));
+        $pdf->setPaper('A4', 'landscape');
+
+        $namaFile = 'Laporan_Jadwal_Kuliah_'.str_replace('/', '-', $tahunAjaran->nama_tahun).'_'.$tahunAjaran->semester;
+
+        return $pdf->stream($namaFile.'.pdf');
     }
 
     /**

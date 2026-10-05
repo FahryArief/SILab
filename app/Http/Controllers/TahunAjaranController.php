@@ -24,9 +24,11 @@ class TahunAjaranController extends Controller
         $request->validate([
             'nama_tahun' => 'required|string|max:255',
             'semester' => 'required|in:Ganjil,Genap',
+            'tanggal_mulai' => 'nullable|date',
+            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
         ]);
 
-        TahunAjaran::create($request->only(['nama_tahun', 'semester']));
+        TahunAjaran::create($request->only(['nama_tahun', 'semester', 'tanggal_mulai', 'tanggal_selesai']));
 
         return redirect()->back()->with('success', 'Data Tahun Ajaran berhasil ditambahkan.');
     }
@@ -39,10 +41,12 @@ class TahunAjaranController extends Controller
         $request->validate([
             'nama_tahun' => 'required|string|max:255',
             'semester' => 'required|in:Ganjil,Genap',
+            'tanggal_mulai' => 'nullable|date',
+            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
         ]);
 
         $tahunAjaran = TahunAjaran::findOrFail($id);
-        $tahunAjaran->update($request->only(['nama_tahun', 'semester']));
+        $tahunAjaran->update($request->only(['nama_tahun', 'semester', 'tanggal_mulai', 'tanggal_selesai']));
 
         return redirect()->back()->with('success', 'Data Tahun Ajaran berhasil diperbarui.');
     }
