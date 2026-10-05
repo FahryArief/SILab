@@ -12,6 +12,7 @@ use App\Models\AuditBarang;
 use App\Models\AuditRuangan;
 use App\Models\JadwalKuliah;
 use App\Models\TahunAjaran;
+use App\Models\Pemeliharaan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
@@ -97,12 +98,13 @@ class LaporanController extends Controller
         // ========== DATA UNTUK FILTER TAHUN AJARAN DI LAPORAN ==========
         $tahunAjarans = TahunAjaran::orderByDesc('tanggal_mulai')->orderByDesc('id')->get();
         $ruanganList = Ruangan::select(['id', 'nama_ruangan'])->orderBy('nama_ruangan')->get();
+        $barangList = Barang::select(['id', 'nama_barang', 'barcode'])->orderBy('nama_barang')->get();
 
         return view('operator.laporan.index', compact(
             'dataTren', 'labelKategori', 'dataKategori', 'labelRuang', 'dataRuang', 'tahunIni',
             'totalBarang', 'totalRuangan', 'totalPeminjaman', 'totalBooking',
             'kondisiData', 'kondisiLabel', 'statusStats', 'dataBookingTren', 'auditPeriodes',
-            'tahunAjarans', 'ruanganList'
+            'tahunAjarans', 'ruanganList', 'barangList'
         ));
     }
 
@@ -235,6 +237,37 @@ class LaporanController extends Controller
         $namaFile = 'Laporan_Jadwal_Kuliah_'.str_replace('/', '-', $tahunAjaran->nama_tahun).'_'.$tahunAjaran->semester;
 
         return $pdf->stream($namaFile.'.pdf');
+    }
+
+    /**
+     * Export PDF: Laporan Pemeliharaan Laboratorium
+     *
+     * Log/riwayat pemeliharaan (perbaikan/perawatan) Barang & Ruangan, per
+     * rentang tanggal — independen dari Tahun Ajaran (snapshot kejadian apa
+     * adanya, sama seperti Laporan Peminjaman), bisa diperhalus dengan
+     * filter jenis aset (Barang/Ruangan/Semua).
+     */
+    public function cetakPemeliharaan(Request $request)
+    {
+        $request->validate([
+            'tgl_mulai' => 'required|date',
+            'tgl_sampai' => 'required|date|after_or_equal:tgl_mulai',
+            'jenis_aset' => 'nullable|in:barang,ruangan',
+        ]);
+
+        $mulai = $request->tgl_mulai;
+        $sampai = $request->tgl_sampai;
+
+        $pemeliharaans = Pemeliharaan::with(['barang:id,nama_barang', 'ruangan:id,nama_ruangan', 'teknisi:id,name'])
+            ->whereBetween('tanggal_pemeliharaan', [$mulai, $sampai])
+            ->when($request->filled('jenis_aset'), fn($q) => $q->where('jenis_aset', $request->jenis_aset))
+            ->orderBy('tanggal_pemeliharaan', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('operator.laporan.pdf_pemeliharaan', compact('pemeliharaans', 'mulai', 'sampai'));
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->stream('Laporan_Pemeliharaan_'.$mulai.'_sd_'.$sampai.'.pdf');
     }
 
     /**

@@ -30,6 +30,9 @@
         <x-nav-link :href="route('booking.index')" :active="request()->routeIs('booking.*')">
             {{ __('Booking') }}
         </x-nav-link>
+        <x-nav-link :href="route('admin.pemeliharaan.index')" :active="request()->routeIs('admin.pemeliharaan.*')">
+            {{ __('Pemeliharaan') }}
+        </x-nav-link>
         <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
             {{ __('Laporan') }}
         </x-nav-link>
@@ -42,6 +45,9 @@
         </x-nav-link>
         <x-nav-link :href="route('admin.jadwal_kuliah.index')" :active="request()->routeIs('admin.jadwal_kuliah.*')">
             {{ __('Jadwal') }}
+        </x-nav-link>
+        <x-nav-link :href="route('admin.pemeliharaan.index')" :active="request()->routeIs('admin.pemeliharaan.*')">
+            {{ __('Pemeliharaan') }}
         </x-nav-link>
         <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
             {{ __('Laporan') }}

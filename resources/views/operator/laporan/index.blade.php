@@ -60,6 +60,13 @@
                             <div class="text-[10px] text-gray-400">Per Tahun Ajaran &amp; Ruangan</div>
                         </div>
                     </button>
+                    <button @click="exportOpen = false; document.getElementById('exportPemeliharaanModal').classList.remove('hidden')" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-rose-50 transition-colors w-full text-left border-t border-gray-100">
+                        <span class="text-lg mr-3">🛠️</span>
+                        <div>
+                            <div class="font-bold text-xs">Laporan Pemeliharaan</div>
+                            <div class="text-[10px] text-gray-400">Riwayat perbaikan, per rentang tanggal</div>
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -330,6 +337,51 @@
                         <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Unduh PDF Jadwal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Export PDF Modal: Pemeliharaan --}}
+    <div id="exportPemeliharaanModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-900 opacity-50 transition-opacity" onclick="document.getElementById('exportPemeliharaanModal').classList.add('hidden')"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <div class="flex justify-between items-center mb-5 border-b pb-3">
+                    <h3 class="text-lg font-bold text-gray-800">🛠️ Laporan Pemeliharaan</h3>
+                    <button onclick="document.getElementById('exportPemeliharaanModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('laporan.pemeliharaan') }}" method="POST" target="_blank">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Dari Tanggal</label>
+                            <input type="date" name="tgl_mulai" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Sampai Tanggal</label>
+                            <input type="date" name="tgl_sampai" value="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Aset (opsional)</label>
+                            <select name="jenis_aset" class="w-full border-gray-300 rounded-lg text-sm focus:border-slate-500 focus:ring-slate-500">
+                                <option value="">Semua (Barang &amp; Ruangan)</option>
+                                <option value="barang">Barang</option>
+                                <option value="ruangan">Ruangan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" class="bg-[#1e293b] text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-[#0f172a] transition w-full flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Unduh PDF Pemeliharaan
                         </button>
                     </div>
                 </form>

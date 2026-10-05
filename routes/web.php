@@ -199,6 +199,13 @@ Route::middleware(['auth', 'role:teknisi,super_admin'])->group(function () {
     Route::patch('/admin/audit/periode/{id}/laporkan', [AuditPeriodeController::class, 'laporkan'])->name('admin.audit.periode.laporkan');
 });
 
+// GRUP ROUTE PEMELIHARAAN (Teknisi, Kepala Lab, Super Admin)
+Route::middleware(['auth', 'role:teknisi,kepala_lab,super_admin'])->group(function () {
+    Route::get('/admin/pemeliharaan', [\App\Http\Controllers\PemeliharaanController::class, 'index'])->name('admin.pemeliharaan.index');
+    Route::post('/admin/pemeliharaan', [\App\Http\Controllers\PemeliharaanController::class, 'store'])->name('admin.pemeliharaan.store');
+    Route::delete('/admin/pemeliharaan/{id}', [\App\Http\Controllers\PemeliharaanController::class, 'destroy'])->name('admin.pemeliharaan.destroy');
+});
+
 
 // ROUTE LAPORAN (Diakses oleh Teknisi, Kepala Lab, Ka Prodi, Super Admin)
 Route::middleware(['auth', 'role:teknisi,kepala_lab,ka_prodi,super_admin'])->group(function () {
@@ -207,6 +214,7 @@ Route::middleware(['auth', 'role:teknisi,kepala_lab,ka_prodi,super_admin'])->gro
     Route::get('/laporan/barang', [\App\Http\Controllers\LaporanController::class, 'cetakBarang'])->name('laporan.barang');
     Route::get('/laporan/ruangan', [\App\Http\Controllers\LaporanController::class, 'cetakRuangan'])->name('laporan.ruangan');
     Route::get('/laporan/jadwal', [\App\Http\Controllers\LaporanController::class, 'cetakJadwal'])->name('laporan.jadwal');
+    Route::post('/laporan/pemeliharaan', [\App\Http\Controllers\LaporanController::class, 'cetakPemeliharaan'])->name('laporan.pemeliharaan');
     Route::post('/laporan/audit', [\App\Http\Controllers\LaporanController::class, 'cetakAudit'])->name('laporan.audit');
 });
 
